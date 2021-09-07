@@ -22,13 +22,17 @@ setup(
 	long_description=long_description,
 	long_description_content_type="text/markdown",
 	url="https://github.com/rcyndie/paraphase",
-	packages=find_packages(),
+	project_urls={
+		"Bug Tracker": "https://github.com/rcyndie/paraphase/issues",
+	},
 	install_requires=requirements,
 	classifiers=[
 			"Programming Language :: Python :: 3",
 			"License :: OSI Approved :: MIT License",
 			"Operating System :: OS Independent",
 	],
+	package_dir={"": "paraphase"},
+	packages=find_packages(where="paraphase"),
 	entry_points='''
 					[console_scripts]
 					paraphase=paraphase.paraphase:main

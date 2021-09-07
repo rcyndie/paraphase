@@ -1,9 +1,10 @@
 from __future__ import print_function
-# import configparser
 import argparse
 import yaml
 from yaml.loader import SafeLoader
 import sys
+# from paraphase.paraphase.calibration.calibrate import ParametrisedPhase
+
 
 def create_parser(argv=None):
 	"""
@@ -65,6 +66,7 @@ def main(debugging=False):
 	"""
 
 	args = create_parser()
+	print(args)
 	
 
 
