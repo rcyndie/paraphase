@@ -22,16 +22,33 @@ class MasterMachine(metaclass=ABCMeta):
 
 		self.args = args
 
-	def compute_jhj(self):
+	def jhj_compute(self):
 		return NotImplementedError
 
 
-	def compute_update(self):
+	def update_compute(self):
 		return NotImplementedError
 
-	def compute_residual(self):
+	def residual_compute(self):
 		return NotImplementedError
 
 	def apply_gains(self):
 		return NotImplementedError
+
+
+class ParametrisedPhase(MasterMachine):
+	"""
+	This class implements phase-only parametrised gain machine with a polynomial
+	basis.
+
+	"""
+
+	def __init__(self, args):
+		"""
+
+		"""
+
+		self.args = args
+		print(self.args)
+
 
