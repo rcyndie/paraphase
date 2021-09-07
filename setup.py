@@ -15,7 +15,7 @@ requirements = [
 
 setup(
 	name='paraphase',
-	version=paraphase.__version__,
+	version="0.0.1",
 	author="Cyndie Russeeawon",
 	author_email="crusseeaw@gmail.com",
 	description="Parametrised phase direction-dependent calibration",
