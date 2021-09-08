@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 #No clue about find_packages as of now
 
-import paraphase
+#import paraphase
 
 with open("README.md", "r") as f:
 	long_description = f.read()
@@ -32,7 +32,7 @@ setup(
 			"Operating System :: OS Independent",
 	],
 	package_dir={"": "paraphase"},
-	packages=find_packages(where="paraphase"),
+	#packages=["paraphase"],
 	entry_points='''
 					[console_scripts]
 					paraphase=paraphase.paraphase:main

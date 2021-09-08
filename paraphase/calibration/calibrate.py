@@ -48,7 +48,15 @@ class ParametrisedPhase(MasterMachine):
 
 		"""
 
+		MasterMachine.__init__(self)
 		self.args = args
 		print(self.args)
+
+	def init_gains(self):
+		"""
+
+		"""
+		
+		self.gains = np.empty(self.gain_shape, dtype=self.dtype)
 
 
