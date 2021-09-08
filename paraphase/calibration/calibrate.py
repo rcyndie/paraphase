@@ -52,11 +52,21 @@ class ParametrisedPhase(MasterMachine):
 		self.args = args
 		print(self.args)
 
+		self.n_param = options.get("pphase-nparam", sources.shape[0])
+
+		#Set random seed for alpha.
+		np.random.seed(3)
+		self.alpha = np.zeros((self.n_timint, self.n_freint, self.n_ant, self.n_param, self.n_cor))
+		
+		self.basis = get_basis(sources)
+
+
 	def init_gains(self):
 		"""
 
 		"""
 		
 		self.gains = np.empty(self.gain_shape, dtype=self.dtype)
+		
 
 
