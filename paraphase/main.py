@@ -4,9 +4,8 @@ import argparse
 import yaml
 from yaml.loader import SafeLoader
 import sys
-# import paraphase
-#from .calibration.calibrate import ParametrisedPhase
-# from paraphase import calibration
+import paraphase
+# from paraphase.calibration.calibrate import ParametrisedPhase
 
 
 def create_parser(argv=None):
@@ -62,6 +61,13 @@ def create_parser(argv=None):
 
 	return args
 
+def debug():
+	"""
+
+	"""
+
+	main(debugging=True)
+
 
 def main(debugging=False):
 	"""
@@ -69,10 +75,18 @@ def main(debugging=False):
 
 	"""
 
-	return create_parser()
+	#Create parser object.
+	args = create_parser()
+
+	###
+	ms = args.ms
+	# data_opts = args["data"]
+
+	# jones_class = get_class(args.type)
+
+
 	
 
 if __name__ == "__main__":
-	#Create parser object.
-	args1 = main()
-	print(args1)
+	main()
+	# print(args1)

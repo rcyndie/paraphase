@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 #No clue about find_packages as of now
 
-#import paraphase
+import paraphase
 
 with open("README.md", "r") as f:
 	long_description = f.read()
@@ -9,6 +9,7 @@ with open("README.md", "r") as f:
 requirements = [
 				'python-casacore',
 				'argparse',
+				'yaml',
 				]
 
 
@@ -31,11 +32,11 @@ setup(
 			"License :: OSI Approved :: MIT License",
 			"Operating System :: OS Independent",
 	],
-	package_dir={"": "paraphase"},
+	#package_dir={"": "paraphase"},
 	#packages=["paraphase"],
 	entry_points='''
 					[console_scripts]
-					paraphase=paraphase.paraphase:main
+					paraphase=paraphase.paraphase.main:main
 	'''
 	,
 )
