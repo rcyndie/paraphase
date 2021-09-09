@@ -1,4 +1,3 @@
-from __future__ import print_function
 import configparser
 import argparse
 import yaml
@@ -57,7 +56,7 @@ def create_parser(argv=None):
 	#about output
 	p4 = p.add_argument_group("out")
 	p4.add_argument("--out-writeto", dest="out-writeto", type=str, help="Write to output MS column")
-	
+
 	args = p.parse_args(remaining_argv)
 
 	return args
@@ -70,7 +69,7 @@ def main(debugging=False):
 	"""
 
 	return create_parser()
-	
+
 
 if __name__ == "__main__":
 	#Create parser object.
