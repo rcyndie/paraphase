@@ -9,11 +9,8 @@ with open("README.md", "r") as f:
 requirements = [
 				'python-casacore',
 				'argparse',
-<<<<<<< HEAD
 				'yaml',
-=======
 				'pyyaml',
->>>>>>> 2c47f081839836d3a77a382b6d29a89454b2537d
 				]
 
 
@@ -36,19 +33,11 @@ setup(
 			"License :: OSI Approved :: MIT License",
 			"Operating System :: OS Independent",
 	],
-<<<<<<< HEAD
 	#package_dir={"": "paraphase"},
-	#packages=["paraphase"],
-	entry_points='''
-					[console_scripts]
-					paraphase=paraphase.paraphase.main:main
-=======
-	# package_dir={"": "paraphase"},
 	packages=find_packages(),
 	entry_points='''
 					[console_scripts]
-					paraphase=paraphase.main:main
->>>>>>> 2c47f081839836d3a77a382b6d29a89454b2537d
+					paraphase=paraphase.paraphase.main:main
 	'''
 	,
 )
