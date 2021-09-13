@@ -9,8 +9,8 @@ with open("README.md", "r") as f:
 requirements = [
 				'python-casacore',
 				'argparse',
-				'yaml',
-				'pyyaml',
+				# 'yaml',
+				# 'PyYAML',
 				]
 
 
@@ -37,7 +37,7 @@ setup(
 	packages=find_packages(),
 	entry_points='''
 					[console_scripts]
-					paraphase=paraphase.paraphase.main:main
+					paraphase=paraphase.main:main
 	'''
 	,
 )

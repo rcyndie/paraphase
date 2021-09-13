@@ -74,7 +74,7 @@ def main(debugging=False):
 
 	"""
 
-<<<<<<< HEAD
+
 	#Create parser object.
 	args = create_parser()
 
@@ -86,10 +86,10 @@ def main(debugging=False):
 
 
 	
-=======
+
 	return create_parser()
 
->>>>>>> 2c47f081839836d3a77a382b6d29a89454b2537d
+
 
 if __name__ == "__main__":
 	main()
