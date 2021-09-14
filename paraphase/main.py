@@ -7,14 +7,16 @@ import sys
 import paraphase
 from optparse import OptionParser
 import pyrap.tables
-# from paraphase.calibration.calibrate import ParametrisedPhase
+from paraphase.calibration.calibrate import calibratewith
 
 def ri(message):
 	"""
+	'\033[91m' << display text in red.
 
 	"""
 
 	print('\033[91m'+message+'\033[0m')
+
 
 def create_parser0(argv=None):
 	"""
@@ -82,6 +84,7 @@ def create_parser(argv=None):
 	p.add_option("--g-save-to", dest="save-to", type=str, help="Save gains to this address")
 	p.add_option("--g-time-int", dest="time-int", type=int, help="Size of solution time interval")
 	p.add_option("--g-freq-int", dest="freq-int", type=int, help="Size of solution frequency interval")
+	p.add_argument("--g-type", type=str, help="Specify basis for parametrised phase gains")
 	# p.add_option("--msname", dest="msname", help="Name of measurement set", action="append")
 	p.add_option("--data-column", dest="column", type=str, help="Name of MS column to read for data")
 	p.add_option("--sky-model", dest="sky-model", type=str, help="Tigger lsm file", action="append")
@@ -128,7 +131,13 @@ def main(debugging=False):
 	anttab.done()
 
 	tt = pyrap.tables.table(msname)
-	uniants = np.unique(t.getcol)
+	uniants = np.unique(tt.getcol("ANTENNA1"))
+	tt.done()
+
+	#How to calibrate?
+	# calibrate
+	#avoid classes
+
 
 	return options, args
 

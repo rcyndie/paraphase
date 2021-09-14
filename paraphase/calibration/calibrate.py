@@ -66,6 +66,15 @@ class ParametrisedPhase(MasterMachine):
 		"""
 		
 		self.gains = np.empty(self.gain_shape, dtype=self.dtype)
+
+
+def calibratewith(solver="ppoly"):
+	"""
+	Call this function to calibrate given data with specified 'solver'.
+
+	"""
+
+	return 0
 		
 
 
