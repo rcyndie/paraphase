@@ -7,7 +7,7 @@ import paraphase
 # from paraphase.calibration.calibrate import ParametrisedPhase
 
 
-def create_parser(argv=None):
+def create_parser0(argv=None):
 	"""
 	Create an ArgumentParser object.
 
@@ -60,6 +60,26 @@ def create_parser(argv=None):
 
 	return args
 
+
+def create_parser(argv=None):
+	"""
+	Create a parser object with OptionParser().
+
+	"""
+
+	p = OptionParser(usage='%prog [options] msname')
+	# p.add_option("-c", "--config", help="Specify configuration file", metavar="FILE", default="default.yml", action="append")
+	p.add_option("-l", "--list", dest="dolist", action="store_true", help="List MS properties and exit", default=False)
+	p.add_option("--g-save-to", dest="save-to", type=str, help="Save gains to this address")
+	p.add_option("--g-time-int", dest="time-int", type=int, help="Size of solution time interval")
+	p.add_option("--g-freq-int", dest="freq-int", type=int, help="Size of solution frequency interval")
+	# p.add_option("--data-ms", dest="ms", help="Name of measurement set", type=str, action="append")
+	p.add_option("--data-column", dest="column", type=str, help="Name of MS column to read for data")
+	p.add_option("--sky-model", dest="sky-model", type=str, help="Tigger lsm file", action="append")
+	p.add_option("--out-writeto", dest="out-writeto", type=str, help="Write to output MS column")
+	
+	return p
+
 def debug():
 	"""
 
@@ -76,7 +96,7 @@ def main(debugging=False):
 
 
 	#Create parser object.
-	args = create_parser()
+	(options, args) = create_parser().parse_args()
 
 	###
 	ms = args.ms
@@ -85,9 +105,7 @@ def main(debugging=False):
 	# jones_class = get_class(args.type)
 
 
-	
-
-	return create_parser()
+	return args
 
 
 

@@ -9,6 +9,7 @@ with open("README.md", "r") as f:
 requirements = [
 				'python-casacore',
 				'argparse',
+				'optparse-pretty',
 				# 'yaml',
 				# 'PyYAML',
 				]
