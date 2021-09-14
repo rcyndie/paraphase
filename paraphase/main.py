@@ -1,3 +1,4 @@
+import numpy as np
 import configparser
 import argparse
 import yaml
@@ -5,8 +6,15 @@ from yaml.loader import SafeLoader
 import sys
 import paraphase
 from optparse import OptionParser
+import pyrap.tables
 # from paraphase.calibration.calibrate import ParametrisedPhase
 
+def ri(message):
+	"""
+
+	"""
+
+	print('\033[91m'+message+'\033[0m')
 
 def create_parser0(argv=None):
 	"""
@@ -74,7 +82,7 @@ def create_parser(argv=None):
 	p.add_option("--g-save-to", dest="save-to", type=str, help="Save gains to this address")
 	p.add_option("--g-time-int", dest="time-int", type=int, help="Size of solution time interval")
 	p.add_option("--g-freq-int", dest="freq-int", type=int, help="Size of solution frequency interval")
-	# p.add_option("--data-ms", dest="ms", help="Name of measurement set", type=str, action="append")
+	# p.add_option("--msname", dest="msname", help="Name of measurement set", action="append")
 	p.add_option("--data-column", dest="column", type=str, help="Name of MS column to read for data")
 	p.add_option("--sky-model", dest="sky-model", type=str, help="Tigger lsm file", action="append")
 	p.add_option("--out-writeto", dest="out-writeto", type=str, help="Write to output MS column")
@@ -95,21 +103,37 @@ def main(debugging=False):
 
 	"""
 
-
 	#Create parser object.
 	(options, args) = create_parser().parse_args()
 
-	###
-	# ms = args.ms
-	# data_opts = args["data"]
+	data = options.column
 
-	# jones_class = get_class(args.type)
 
+	if len(args) != 1:
+		ri('Please specify a single Measurement Set to calibrate.')
+		sys.exit(-1)
+	else:
+		#Remove any trailing characters, for example "/".
+		msname = args[0].rstrip('/')
+
+
+	#MS info.
+	spwtab = pyrap.tables.table(msname+"/FIELD")
+	# n_chan = spwtab.getcol("NUM_CHAN")
+	spwtab.done()
+
+	anttab = pyrap.tables.table(msname+"/ANTENNA")
+	n_ant = len(anttab)
+	antnames = anttab.getcol("NAME")
+	anttab.done()
+
+	tt = pyrap.tables.table(msname)
+	uniants = np.unique(t.getcol)
 
 	return options, args
 
 
 
 if __name__ == "__main__":
-	main()
-	# print(args1)
+	options, args = main()
+	print(args[0])
