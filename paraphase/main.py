@@ -4,6 +4,7 @@ import yaml
 from yaml.loader import SafeLoader
 import sys
 import paraphase
+from optparse import OptionParser
 # from paraphase.calibration.calibrate import ParametrisedPhase
 
 
@@ -99,13 +100,13 @@ def main(debugging=False):
 	(options, args) = create_parser().parse_args()
 
 	###
-	ms = args.ms
+	# ms = args.ms
 	# data_opts = args["data"]
 
 	# jones_class = get_class(args.type)
 
 
-	return args
+	return options, args
 
 
 

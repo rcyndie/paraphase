@@ -10,6 +10,7 @@ requirements = [
 				'python-casacore',
 				'argparse',
 				'optparse-pretty',
+				'pyrap.tables',
 				# 'yaml',
 				# 'PyYAML',
 				]
