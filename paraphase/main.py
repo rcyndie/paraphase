@@ -6,7 +6,7 @@ from yaml.loader import SafeLoader
 import sys
 import paraphase
 from optparse import OptionParser
-import pyrap.tables
+from pyrap.tables import table
 from paraphase.calibration.calibrate import calibratewith
 
 def ri(message):
@@ -81,14 +81,15 @@ def create_parser(argv=None):
 	p = OptionParser(usage='%prog [options] msname')
 	# p.add_option("-c", "--config", help="Specify configuration file", metavar="FILE", default="default.yml", action="append")
 	p.add_option("-l", "--list", dest="dolist", action="store_true", help="List MS properties and exit", default=False)
-	p.add_option("--g-save-to", dest="save-to", type=str, help="Save gains to this address")
-	p.add_option("--g-time-int", dest="time-int", type=int, help="Size of solution time interval")
-	p.add_option("--g-freq-int", dest="freq-int", type=int, help="Size of solution frequency interval")
-	p.add_argument("--g-type", type=str, help="Specify basis for parametrised phase gains")
+	p.add_option("--save-to", dest="save-to", type=str, help="Save gains to this address")
+	p.add_option("--timint", dest="timint", type=int, help="Size of solution time interval")
+	p.add_option("--freint", dest="freint", type=int, help="Size of solution frequency interval")
+	p.add_option("--gtype", dest="gtype", type=str, help="Specify basis solver for parametrised phase gains")
+	p.add_option("--deltachi", dest="deltachi", type=float, help="Specify threshold for solution stagnancy")
 	# p.add_option("--msname", dest="msname", help="Name of measurement set", action="append")
-	p.add_option("--data-column", dest="column", type=str, help="Name of MS column to read for data")
-	p.add_option("--sky-model", dest="sky-model", type=str, help="Tigger lsm file", action="append")
-	p.add_option("--out-writeto", dest="out-writeto", type=str, help="Write to output MS column")
+	p.add_option("--column", dest="column", type=str, help="Name of MS column to read for data")
+	p.add_option("--model", dest="sky-model", type=str, help="Tigger lsm file", action="append")
+	p.add_option("--writeto", dest="writeto", type=str, help="Write to output MS column")
 	
 	return p
 
@@ -113,7 +114,7 @@ def main(debugging=False):
 
 
 	if len(args) != 1:
-		ri('Please specify a single Measurement Set to calibrate.')
+		ri('Please specify a Measurement Set to calibrate.')
 		sys.exit(-1)
 	else:
 		#Remove any trailing characters, for example "/".
@@ -121,28 +122,42 @@ def main(debugging=False):
 
 
 	#MS info.
-	spwtab = pyrap.tables.table(msname+"/FIELD")
+	spwtab = table(msname+"/FIELD")
 	# n_chan = spwtab.getcol("NUM_CHAN")
 	spwtab.done()
 
-	anttab = pyrap.tables.table(msname+"/ANTENNA")
+	anttab = table(msname+"/ANTENNA")
 	n_ant = len(anttab)
 	antnames = anttab.getcol("NAME")
 	anttab.done()
 
-	tt = pyrap.tables.table(msname)
+	tt = table(msname)
 	uniants = np.unique(tt.getcol("ANTENNA1"))
 	tt.done()
 
-	#How to calibrate?
-	# calibrate
-	#avoid classes
+	###
+	#maybe write the gains shape and alpha shape.
+	n_timint = options.timint
+	n_freint = options.freint
+
+	##How to get the following?
+	n_cor = 2
+	n_param = 3
+	n_dir = 3
+	n_fre = 10
+
+	solvertype = options.gtype
+	alpha_shape = [n_timint, n_freint, n_ant, n_param, n_cor]
+	gains_shape = [n_dir, n_timint, n_fre, n_ant, n_cor, n_cor]
+	calibratewith(data, alpha_shape, gains_shape, options.deltachi, solvertype)
+
+
 
 
 	return options, args
 
 
-
 if __name__ == "__main__":
 	options, args = main()
-	print(args[0])
+	# print(args[0])
+	# print(options[0])
