@@ -11,7 +11,7 @@ requirements = [
 				'argparse',
 				'optparse-pretty',
 				# 'yaml',
-				# 'PyYAML',
+				'PyYAML',
 				]
 
 

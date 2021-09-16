@@ -1,8 +1,8 @@
 import numpy as np
 import configparser
 import argparse
-import yaml
-from yaml.loader import SafeLoader
+# import pyyaml
+# from yaml.loader import SafeLoader
 import sys
 import paraphase
 from optparse import OptionParser
@@ -88,7 +88,7 @@ def create_parser(argv=None):
 	p.add_option("--deltachi", dest="deltachi", type=float, help="Specify threshold for solution stagnancy")
 	# p.add_option("--msname", dest="msname", help="Name of measurement set", action="append")
 	p.add_option("--column", dest="column", type=str, help="Name of MS column to read for data")
-	p.add_option("--model", dest="sky-model", type=str, help="Tigger lsm file", action="append")
+	p.add_option("--model", dest="model", type=str, help="Tigger lsm file", action="append")
 	p.add_option("--writeto", dest="writeto", type=str, help="Write to output MS column")
 	
 	return p
@@ -111,7 +111,7 @@ def main(debugging=False):
 	(options, args) = create_parser().parse_args()
 
 	data = options.column
-
+	msrcs = options.model
 
 	if len(args) != 1:
 		ri('Please specify a Measurement Set to calibrate.')
@@ -122,36 +122,40 @@ def main(debugging=False):
 
 
 	#MS info.
-	spwtab = table(msname+"/FIELD")
+	# spwtab = table(msname+"/FIELD")
 	# n_chan = spwtab.getcol("NUM_CHAN")
-	spwtab.done()
+	# spwtab.close()
+
+	freqtab = table(msname+"/SPECTRAL_WINDOW")
+	chan_freq = freqtab.getcol("CHAN_FREQ").squeeze()
+	freqtab.close()
+	n_fre = chan_freq.size
 
 	anttab = table(msname+"/ANTENNA")
 	n_ant = len(anttab)
 	antnames = anttab.getcol("NAME")
-	anttab.done()
+	anttab.close()
 
 	tt = table(msname)
 	uniants = np.unique(tt.getcol("ANTENNA1"))
-	tt.done()
+	tt.close()
 
 	###
 	#maybe write the gains shape and alpha shape.
 	n_timint = options.timint
 	n_freint = options.freint
+	n_dir = len(msrcs)
+	print(n_dir, "length of the model list")
 
 	##How to get the following?
 	n_cor = 2
 	n_param = 3
-	n_dir = 3
-	n_fre = 10
+	# n_dir = 3
 
 	solvertype = options.gtype
 	alpha_shape = [n_timint, n_freint, n_ant, n_param, n_cor]
 	gains_shape = [n_dir, n_timint, n_fre, n_ant, n_cor, n_cor]
-	calibratewith(data, alpha_shape, gains_shape, options.deltachi, solvertype)
-
-
+	calibratewith(data, msrcs, options.deltachi, alpha_shape, gains_shape, options.deltachi, solvertype)
 
 
 	return options, args
