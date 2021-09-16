@@ -12,6 +12,7 @@ requirements = [
 				'optparse-pretty',
 				# 'yaml',
 				'PyYAML',
+				'astro-tigger-lsm',
 				]
 
 
