@@ -5,9 +5,11 @@ import argparse
 # from yaml.loader import SafeLoader
 import sys
 import paraphase
+import Tigger
 from optparse import OptionParser
 from pyrap.tables import table
 from paraphase.calibration.calibrate import calibratewith
+
 
 def ri(message):
 	"""
@@ -87,11 +89,36 @@ def create_parser(argv=None):
 	p.add_option("--gtype", dest="gtype", type=str, help="Specify basis solver for parametrised phase gains")
 	p.add_option("--deltachi", dest="deltachi", type=float, help="Specify threshold for solution stagnancy")
 	# p.add_option("--msname", dest="msname", help="Name of measurement set", action="append")
-	p.add_option("--column", dest="column", type=str, help="Name of MS column to read for data")
-	p.add_option("--model", dest="model", type=str, help="Tigger lsm file", action="append")
+	p.add_option("--column", dest="column", type=str, help="Name of MS column to read for data", default="DATA")
+	p.add_option("--model", dest="model", type=str, help="Tigger lsm file")
 	p.add_option("--writeto", dest="writeto", type=str, help="Write to output MS column")
 	
 	return p
+
+def extract_modelsrcs(phase_centre, model):
+	"""
+	How to manipulate Tigger sky model (lsm) (model) to obtain ra, dec?
+	>>> l and m.
+
+	"""
+
+	mdsrcs = Tigger.load(model)
+	n_dir = len(mdsrcs)
+	ra0, dec0 = phase_centre[0], phase_centre[1]
+	arr1 = np.zeros((n_dir, 2), dtype=np.float64)
+	arr2 = np.zeros((n_dir, 3), dtype=np.float64)
+
+	for d in range(n_dir):
+		arr2[d, 0] = mdsrcs[d].flux.I
+		arr1[d, 0] = mdsrcs[d].pos.ra
+		arr1[d, 1] = mdsrcs[d].pos.dec
+
+	ra_delta = arr1[:, 0] - ra0
+	arr2[:, 1] = np.cos(arr1[:, 1]) * np.sin(ra_delta)
+	arr2[:, 2] = np.sin(arr1[:, 1]) * np.cos(dec0) - np.cos(arr1[:, 1]) * np.sin(dec0) * np.cos(ra_delta)
+
+	return arr2
+
 
 def debug():
 	"""
@@ -110,8 +137,8 @@ def main(debugging=False):
 	#Create parser object.
 	(options, args) = create_parser().parse_args()
 
-	data = options.column
-	msrcs = options.model
+	model = options.model
+	solvertype = options.gtype
 
 	if len(args) != 1:
 		ri('Please specify a Measurement Set to calibrate.')
@@ -120,11 +147,10 @@ def main(debugging=False):
 		#Remove any trailing characters, for example "/".
 		msname = args[0].rstrip('/')
 
-
 	#MS info.
-	# spwtab = table(msname+"/FIELD")
-	# n_chan = spwtab.getcol("NUM_CHAN")
-	# spwtab.close()
+	fieldtab = table(msname+"/FIELD")
+	phase_centre = fieldtab.getcol("PHASE_DIR")[0, 0]
+	fieldtab.close()
 
 	freqtab = table(msname+"/SPECTRAL_WINDOW")
 	chan_freq = freqtab.getcol("CHAN_FREQ").squeeze()
@@ -138,24 +164,26 @@ def main(debugging=False):
 
 	tt = table(msname)
 	uniants = np.unique(tt.getcol("ANTENNA1"))
+	##Calibrate *** column.
+	data = tt.getcol(options.column)
 	tt.close()
+	n_cor = data.shape[2]
 
 	###
-	#maybe write the gains shape and alpha shape.
 	n_timint = options.timint
 	n_freint = options.freint
-	n_dir = len(msrcs)
-	print(n_dir, "length of the model list")
 
-	##How to get the following?
-	n_cor = 2
+	##About modelled sources.
+	ra0, dec0 = phase_centre[0], phase_centre[1]
+	arr_srcs = extract_modelsrcs(phase_centre, model)
+	n_dir = arr_srcs.shape[0]
+
+	###How to obtain the following?
 	n_param = 3
-	# n_dir = 3
 
-	solvertype = options.gtype
 	alpha_shape = [n_timint, n_freint, n_ant, n_param, n_cor]
 	gains_shape = [n_dir, n_timint, n_fre, n_ant, n_cor, n_cor]
-	calibratewith(data, msrcs, options.deltachi, alpha_shape, gains_shape, options.deltachi, solvertype)
+	calibratewith(data, arr_srcs, options.deltachi, alpha_shape, gains_shape, options.deltachi, solvertype)
 
 
 	return options, args
@@ -163,5 +191,3 @@ def main(debugging=False):
 
 if __name__ == "__main__":
 	options, args = main()
-	# print(args[0])
-	# print(options[0])
