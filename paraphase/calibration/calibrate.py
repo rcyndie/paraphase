@@ -1,80 +1,38 @@
 import numpy as np
-from abc import ABCMeta
+from paraphase.calibration.basis_compute import basis_compute
+from paraphase.calibration.gains_compute import gains_compute
 
-#Maybe treat this like the MasterMachine class from CubiCal?!
-class MasterMachine(metaclass=ABCMeta):
+
+def calibratewith(data, msrcs, bparams, alpha_shape, gains_shape, tol, solver):
 	"""
-	Provides base class for parametrised phase-only solver.
-	And, lays the basic requirements for all machines.
-
-	"""
-
-	def __init__(self, args):
-		"""
-		Initialises a phase-only parametrised gain solver.
-
-		Args:
-			args (dict or namespace?)
-			....
-
-		"""
-
-		self.args = args
-
-	def jhj_compute(self):
-		return NotImplementedError
-
-
-	def update_compute(self):
-		return NotImplementedError
-
-	def residual_compute(self):
-		return NotImplementedError
-
-	def apply_gains(self):
-		return NotImplementedError
-
-
-class ParametrisedPhase(MasterMachine):
-	"""
-	This class implements phase-only parametrised gain machine with a polynomial
-	basis.
+	The function calibrates given data with specified 'solver'.
 
 	"""
 
-	def __init__(self, args):
-		"""
+	#compute basis
+	#get gains (also input gains_shape)
+	#compute J
+	#compute JH
+	#compute JHJ
+	#get residuals
+	#compute JHr
 
-		"""
+	#
+	basis = basis_compute(msrcs, bparams, solver)
+	# gains_compute()
 
-		MasterMachine.__init__(self)
-		self.args = args
-		print(self.args)
-
-		self.n_param = options.get("pphase-nparam", sources.shape[0])
-
-		#Set random seed for alpha.
-		np.random.seed(3)
-		self.alpha = np.zeros((self.n_timint, self.n_freint, self.n_ant, self.n_param, self.n_cor))
-		
-		self.basis = get_basis(sources)
-
-
-	def init_gains(self):
-		"""
-
-		"""
-		
-		self.gains = np.empty(self.gain_shape, dtype=self.dtype)
-
-
-def calibratewith(solver="ppoly"):
 	"""
-	Call this function to calibrate given data with specified 'solver'.
+	while True:
+		#get J
+		#get JHJ, JHr
+		#compute update
+
+		if ...
 
 	"""
 
-	return 0
+
+	return data
 		
 
 

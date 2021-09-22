@@ -29,8 +29,7 @@ def get_basis_poly(n_par, sources):
     l = sources[:, 1]
     m = sources[:, 2]
 
-    #Get "n_dir" dimension.
-    n_dir = sources.shape[0] #len(l)
+    n_dir = sources.shape[0]
     basis = np.zeros((n_par, n_dir))
 
     for s in range(n_dir):
@@ -53,7 +52,7 @@ def get_basis_cov(bparams, sources):
     L = np.linalg.cholesky(K + bparams["jitter"] * np.eye(K.shape[0]))
     #Remember L and K are of shapes n_sources \times n_sources, or
     #if I am incorrect, they should at least be of the same shapes.
-    
+
     return L
 
 def squared_exp(x, xp, sigmaf, l):
@@ -74,7 +73,7 @@ def squared_exp(x, xp, sigmaf, l):
 
     #Create covariance matrix.
     C = np.zeros((N, M))
-    
+
     for i in range(N):
         for j in range(M):
             C[i, j] = sigmaf**2*np.exp(-(1/2*l**2)*((x[:, 1][i] - xp[:, 1][j])**2 + (x[:, 2][i] - xp[:, 2][j])**2))
