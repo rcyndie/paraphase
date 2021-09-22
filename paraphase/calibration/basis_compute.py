@@ -1,13 +1,13 @@
 import numpy as np
 
-def make_basis_vec(n_param, l_s, m_s):
+def make_basis_vec(n_par, l_s, m_s):
     """
     Generating the basis polynomial to compute the phase equation. Right now, 
     it is of the form [1, l_s, m_s, l_s**2, m_s**2, ...] with l_s and m_s being 
-    scalars. The function returns a vector of length n_params.
+    scalars. The function returns a vector of length n_par.
     """
     
-    N = (n_param+1) // 2
+    N = (n_par+1) // 2
     lvec = (np.tile(l_s, N-1) ** np.arange(1, N))
     mvec = (np.tile(m_s, N-1) ** np.arange(1, N))
 
@@ -18,7 +18,7 @@ def make_basis_vec(n_param, l_s, m_s):
     
     return np.insert(main_vec, 0, [1])
 
-def get_basis_poly(n_par, sources):
+def get_basis_poly(sources, n_par):
     """
     Get basis matrix of shape (n_params, n_dir). Both l and m, which represent the
     direction cosine coordinates of the sources are each vectors of length n_dir.
@@ -37,7 +37,7 @@ def get_basis_poly(n_par, sources):
 
     return basis
 
-def get_basis_cov(bparams, sources):
+def get_basis_cov(sources, bparams):
     """
     Get basis matrix >>> covariance matrix >>> Cholesky decomposition.
     recall bparams = {"n_par": n_dir, "sigmaf": options.sigmaf, "lscale": options.lscale}
@@ -91,6 +91,6 @@ def basis_compute(msrcs, bparams):
     """
 
     if bparams["gtype"] == "ppoly":
-        return get_basis_poly(bparams["n_par"], msrcs)
+        return get_basis_poly(msrcs, bparams["n_par"])
     elif bparams["gtype"] == "pcov":
-        return get_basis_cov(bparams, msrcs)
+        return get_basis_cov(msrcs, bparams)
