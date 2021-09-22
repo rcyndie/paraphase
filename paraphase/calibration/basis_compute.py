@@ -47,16 +47,13 @@ def get_basis_cov(bparams, sources):
 
     #Get covariance matrix.
     #(sources, sources)? (x, xp)? maybe needs tweaking?
-    K = _squared_exp(sources, sources, bparams["sigmaf"], bparams["lscale"])
-
-    #
-    jitter = 1e-6
+    K = squared_exp(sources, sources, bparams["sigmaf"], bparams["lscale"])
 
     #Compute Cholesky decomposition of K_inv.
-    L = np.linalg.cholesky(K + jitter*np.eye(K.shape[0]))
+    L = np.linalg.cholesky(K + bparams["jitter"] * np.eye(K.shape[0]))
     #Remember L and K are of shapes n_sources \times n_sources, or
     #if I am incorrect, they should at least be of the same shapes.
-
+    
     return L
 
 def squared_exp(x, xp, sigmaf, l):
