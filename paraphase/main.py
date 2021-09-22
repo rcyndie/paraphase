@@ -143,7 +143,7 @@ def main(debugging=False):
 	(options, args) = create_parser().parse_args()
 
 	model = options.model
-	solvertype = options.gtype
+	# solvertype = options.gtype
 
 	if len(args) != 1:
 		ri('Please specify a Measurement Set to calibrate.')
@@ -183,17 +183,19 @@ def main(debugging=False):
 	arr_srcs = extract_modelsrcs(phase_centre, model)
 	n_dir = arr_srcs.shape[0]
 
-	#Number of parameters for alpha.
-	if solvertype == "ppoly":
+	#Parameters for alpha.
+	bparams = {"gtype": options.gtype}
+	if options.gtype == "ppoly":
 		n_par = options.npar
-		bparams = {"n_par": options.npar}
-	elif solvertype == "pcov":
+		bparams["n_par"] = options.npar
+	elif options.gtype == "pcov":
 		n_par = n_dir
-		bparams = {"n_par": n_dir, "sigmaf": options.sigmaf, "lscale": options.lscale, "jitter": options.jitter, "kernel": options.kernel}
+		bparams2 = {"n_par": n_dir, "sigmaf": options.sigmaf, "lscale": options.lscale, "jitter": options.jitter, "kernel": options.kernel}
+		bparams.update(bparams2)
 	
 	alpha_shape = [n_timint, n_freint, n_ant, n_par, n_cor]
 	gains_shape = [n_dir, n_timint, n_fre, n_ant, n_cor, n_cor]
-	calibratewith(data, arr_srcs, bparams, alpha_shape, gains_shape, options.deltachi, solvertype)
+	calibratewith(data, arr_srcs, bparams, alpha_shape, gains_shape, options.deltachi)
 
 
 	return options, args

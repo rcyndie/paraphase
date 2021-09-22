@@ -3,7 +3,7 @@ from paraphase.calibration.basis_compute import basis_compute
 from paraphase.calibration.gains_compute import gains_compute
 
 
-def calibratewith(data, msrcs, bparams, alpha_shape, gains_shape, tol, solver):
+def calibratewith(data, msrcs, bparams, alpha_shape, gains_shape, tol):
 	"""
 	The function calibrates given data with specified 'solver'.
 
@@ -18,7 +18,7 @@ def calibratewith(data, msrcs, bparams, alpha_shape, gains_shape, tol, solver):
 	#compute JHr
 
 	#
-	basis = basis_compute(msrcs, bparams, solver)
+	basis = basis_compute(msrcs, bparams)
 	# gains_compute()
 
 	"""

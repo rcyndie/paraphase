@@ -81,7 +81,7 @@ def squared_exp(x, xp, sigmaf, l):
     return C
 
 
-def basis_compute(msrcs, bparams, solver):
+def basis_compute(msrcs, bparams):
     """
     The function computes a basis given the specifications.
     params is n_par when using a ppoly gtype.
@@ -89,7 +89,7 @@ def basis_compute(msrcs, bparams, solver):
 
     """
 
-    if solver == "ppoly":
+    if bparams["gtype"] == "ppoly":
         return get_basis_poly(bparams["n_par"], msrcs)
-    elif solver == "pcov":
+    elif bparams["gtype"] == "pcov":
         return get_basis_cov(bparams, msrcs)
