@@ -87,7 +87,7 @@ def create_parser(argv=None):
 	p.add_option("--timint", dest="timint", type=int, help="Size of solution time interval")
 	p.add_option("--freint", dest="freint", type=int, help="Size of solution frequency interval")
 	p.add_option("--gtype", dest="gtype", type=str, help="Specify basis solver for parametrised phase gains", default="ppoly")
-	p.add_option("--npar", dest="npar", type=int, help="Specify number of parameters for gtype-ppoly", default=3)
+	p.add_option("--npar", dest="npar", type=int, help="Specify (odd) number of parameters for gtype-ppoly", default=3)
 	p.add_option("--kernel", dest="kernel", type=str, help="Specify kernel for covariance function for gtype-pcov")
 	p.add_option("--sigmaf", dest="sigmaf", type=float, help="Standard deviation which controls vertical scaling for gtype-pcov", default=1000.0)
 	p.add_option("--lscale", dest="lscale", type=float, help="Specify input length-scale for gtype-pcov", default=1.0)
