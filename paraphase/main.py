@@ -86,7 +86,10 @@ def create_parser(argv=None):
 	p.add_option("--save-to", dest="save-to", type=str, help="Save gains to this address")
 	p.add_option("--timint", dest="timint", type=int, help="Size of solution time interval")
 	p.add_option("--freint", dest="freint", type=int, help="Size of solution frequency interval")
-	p.add_option("--gtype", dest="gtype", type=str, help="Specify basis solver for parametrised phase gains")
+	p.add_option("--gtype", dest="gtype", type=str, help="Specify basis solver for parametrised phase gains", default="ppoly")
+	p.add_option("--npar", dest="npar", type=int, help="Specify number of parameters for gtype-ppoly", default=3)
+	p.add_option("--sigmaf", dest="sigmaf", type=float, help="Standard deviation which controls vertical scaling for gtype-pcov", default=1000.0)
+	p.add_option("--lscale", dest="lscale", type=float, help="Input length-scale for gtype-pcov", default=1.0)
 	p.add_option("--deltachi", dest="deltachi", type=float, help="Specify threshold for solution stagnancy")
 	# p.add_option("--msname", dest="msname", help="Name of measurement set", action="append")
 	p.add_option("--column", dest="column", type=str, help="Name of MS column to read for data", default="DATA")
@@ -178,12 +181,17 @@ def main(debugging=False):
 	arr_srcs = extract_modelsrcs(phase_centre, model)
 	n_dir = arr_srcs.shape[0]
 
-	###How to obtain the following?
-	n_param = 3
-
-	alpha_shape = [n_timint, n_freint, n_ant, n_param, n_cor]
+	#Number of parameters for alpha.
+	if solvertype == "ppoly":
+		n_par = options.npar
+		bparams = {"n_par": options.npar}
+	elif solvertype == "pcov":
+		n_par = n_dir
+		bparams = {"n_par": n_dir, "sigmaf": options.sigmaf, "lscale": options.lscale}
+	
+	alpha_shape = [n_timint, n_freint, n_ant, n_par, n_cor]
 	gains_shape = [n_dir, n_timint, n_fre, n_ant, n_cor, n_cor]
-	calibratewith(data, arr_srcs, options.deltachi, alpha_shape, gains_shape, options.deltachi, solvertype)
+	calibratewith(data, arr_srcs, bparams, alpha_shape, gains_shape, options.deltachi, solvertype)
 
 
 	return options, args
