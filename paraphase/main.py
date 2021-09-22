@@ -88,8 +88,10 @@ def create_parser(argv=None):
 	p.add_option("--freint", dest="freint", type=int, help="Size of solution frequency interval")
 	p.add_option("--gtype", dest="gtype", type=str, help="Specify basis solver for parametrised phase gains", default="ppoly")
 	p.add_option("--npar", dest="npar", type=int, help="Specify number of parameters for gtype-ppoly", default=3)
+	p.add_option("--kernel", dest="kernel", type=str, help="Specify kernel for covariance function for gtype-pcov")
 	p.add_option("--sigmaf", dest="sigmaf", type=float, help="Standard deviation which controls vertical scaling for gtype-pcov", default=1000.0)
-	p.add_option("--lscale", dest="lscale", type=float, help="Input length-scale for gtype-pcov", default=1.0)
+	p.add_option("--lscale", dest="lscale", type=float, help="Specify input length-scale for gtype-pcov", default=1.0)
+	p.add_option("--jitter", dest="jitter", type=float, help="Specify jitter for Cholesky decomposition for gtype-pcov", default=1e-6)
 	p.add_option("--deltachi", dest="deltachi", type=float, help="Specify threshold for solution stagnancy")
 	# p.add_option("--msname", dest="msname", help="Name of measurement set", action="append")
 	p.add_option("--column", dest="column", type=str, help="Name of MS column to read for data", default="DATA")
@@ -187,7 +189,7 @@ def main(debugging=False):
 		bparams = {"n_par": options.npar}
 	elif solvertype == "pcov":
 		n_par = n_dir
-		bparams = {"n_par": n_dir, "sigmaf": options.sigmaf, "lscale": options.lscale}
+		bparams = {"n_par": n_dir, "sigmaf": options.sigmaf, "lscale": options.lscale, "jitter": options.jitter, "kernel": options.kernel}
 	
 	alpha_shape = [n_timint, n_freint, n_ant, n_par, n_cor]
 	gains_shape = [n_dir, n_timint, n_fre, n_ant, n_cor, n_cor]
