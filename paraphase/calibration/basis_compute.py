@@ -41,6 +41,7 @@ def get_basis_cov(bparams, sources):
     """
     Get basis matrix >>> covariance matrix >>> Cholesky decomposition.
     recall bparams = {"n_par": n_dir, "sigmaf": options.sigmaf, "lscale": options.lscale}
+    and more.
 
     """
 
@@ -84,8 +85,8 @@ def squared_exp(x, xp, sigmaf, l):
 def basis_compute(msrcs, bparams):
     """
     The function computes a basis given the specifications.
-    params is n_par when using a ppoly gtype.
-    params is n_dir, sigmaf, l and more when using a pcov gtype.
+    params is n_par when using a gtype-ppoly.
+    params is n_dir, sigmaf, l and more when using a gtype-pcov.
 
     """
 
