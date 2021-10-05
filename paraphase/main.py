@@ -1,3 +1,4 @@
+import logging
 import numpy as np
 import configparser
 import argparse
@@ -10,6 +11,9 @@ from optparse import OptionParser
 from pyrap.tables import table
 from paraphase.calibration.calibrate import calibratewith
 
+#Create a custom logger.
+logger = logging.getLogger(__name__)
+logger.warning("This is a warning")
 
 def ri(message):
 	"""
@@ -86,6 +90,7 @@ def create_parser(argv=None):
 	p.add_option("--save-to", dest="save-to", type=str, help="Save gains to this address")
 	p.add_option("--timint", dest="timint", type=int, help="Size of solution time interval")
 	p.add_option("--freint", dest="freint", type=int, help="Size of solution frequency interval")
+	p.add_option("--freqf", dest="freqf", type=str, help="Specify function for frequency dependence", default="linear")
 	p.add_option("--gtype", dest="gtype", type=str, help="Specify basis solver for parametrised phase gains", default="ppoly")
 	p.add_option("--npar", dest="npar", type=int, help="Specify (odd) number of parameters for gtype-ppoly", default=3)
 	p.add_option("--kernel", dest="kernel", type=str, help="Specify kernel for covariance function for gtype-pcov")
@@ -161,6 +166,14 @@ def main(debugging=False):
 	chan_freq = freqtab.getcol("CHAN_FREQ").squeeze()
 	freqtab.close()
 	n_fre = chan_freq.size
+	if n_fre > 1:
+		chan_freq = chan_freq/min(chan_freq)
+		if options.freqf == "linear":
+			chan_freq = 1./chan_freq
+		elif options.freqf == "quadratic":
+			chan_freq = 1/(chan_freq**2)
+	elif n_fre == 1:
+		chan_freq = np.ones(1, dtype=chan_freq.dtype)
 
 	anttab = table(msname+"/ANTENNA")
 	n_ant = len(anttab)
@@ -183,7 +196,7 @@ def main(debugging=False):
 	arr_srcs = extract_modelsrcs(phase_centre, model)
 	n_dir = arr_srcs.shape[0]
 
-	#Parameters for alpha.
+	#Parameters for basis.
 	bparams = {"gtype": options.gtype}
 	if options.gtype == "ppoly":
 		n_par = options.npar
@@ -193,9 +206,14 @@ def main(debugging=False):
 		bparams2 = {"n_par": n_dir, "sigmaf": options.sigmaf, "lscale": options.lscale, "jitter": options.jitter, "kernel": options.kernel}
 		bparams.update(bparams2)
 	
+	#Parameters for gains. 
 	alpha_shape = [n_timint, n_freint, n_ant, n_par, n_cor]
 	gains_shape = [n_dir, n_timint, n_fre, n_ant, n_cor, n_cor]
-	calibratewith(data, arr_srcs, bparams, alpha_shape, gains_shape, options.deltachi)
+	gparams = {"chan_freq": chan_freq, "alpha_shape": alpha_shape, "gains_shape": gains_shape}
+	gparams.update(bparams)
+
+	#
+	calibratewith(data, arr_srcs, bparams, gparams, options.deltachi)
 
 
 	return options, args

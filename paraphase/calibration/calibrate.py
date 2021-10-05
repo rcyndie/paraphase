@@ -3,13 +3,13 @@ from paraphase.calibration.basis_compute import basis_compute
 from paraphase.calibration.gains_compute import gains_compute
 
 
-def calibratewith(data, msrcs, bparams, alpha_shape, gains_shape, tol):
+def calibratewith(data, msrcs, bparams, gparams, tol):
 	"""
 	The function calibrates given data with specified 'solver'.
 
 	"""
 
-	#compute basis
+	#compute basis <<< done!
 	#get gains (also input gains_shape)
 	#compute J
 	#compute JH
@@ -19,7 +19,10 @@ def calibratewith(data, msrcs, bparams, alpha_shape, gains_shape, tol):
 
 	#
 	basis = basis_compute(msrcs, bparams)
-	# gains_compute()
+	#For unity gains.
+	alpha = np.zeros(gparams["alpha_shape"], dtype=float)
+	gains = gains_compute(basis, alpha, gparams)
+	# print(gains)
 
 	"""
 	while True:
