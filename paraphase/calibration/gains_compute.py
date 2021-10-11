@@ -26,6 +26,7 @@ def get_gains_cov(basis, alpha, gparams):
     """
     Returns the gains of shape (n_dir, n_ant) using alpha (array containing gain
     parameters per antenna).
+    
     """ 
 
     n_dir, n_timint, n_fre, n_ant, n_cor, _ = gparams["gains_shape"]

@@ -10,10 +10,13 @@ import Tigger
 from optparse import OptionParser
 from pyrap.tables import table
 from paraphase.calibration.calibrate import calibratewith
+from paraphase.format_1D2D import ms_1D_to_2D
+from paraphase.format_1D2D import ms_2D_to_1D
+# from paraphase.format_1D2D import add_new_col
 
 #Create a custom logger.
-logger = logging.getLogger(__name__)
-logger.warning("This is a warning")
+# logger = logging.getLogger(__name__)
+# logger.warning("This is a warning")
 
 def ri(message):
 	"""
@@ -100,7 +103,7 @@ def create_parser(argv=None):
 	p.add_option("--deltachi", dest="deltachi", type=float, help="Specify threshold for solution stagnancy")
 	# p.add_option("--msname", dest="msname", help="Name of measurement set", action="append")
 	p.add_option("--column", dest="column", type=str, help="Name of MS column to read for data", default="DATA")
-	p.add_option("--model", dest="model", type=str, help="Tigger lsm file")
+	p.add_option("--skymodel", dest="skymodel", type=str, help="Tigger lsm file")
 	p.add_option("--writeto", dest="writeto", type=str, help="Write to output MS column")
 	
 	return p
@@ -147,8 +150,7 @@ def main(debugging=False):
 	#Create parser object.
 	(options, args) = create_parser().parse_args()
 
-	model = options.model
-	# solvertype = options.gtype
+	skymodel = options.skymodel
 
 	if len(args) != 1:
 		ri('Please specify a Measurement Set to calibrate.')
@@ -182,18 +184,18 @@ def main(debugging=False):
 
 	tt = table(msname)
 	uniants = np.unique(tt.getcol("ANTENNA1"))
-	##Calibrate *** column.
+	#Calibrate *** column.
 	data = tt.getcol(options.column)
 	tt.close()
 	n_cor = data.shape[2]
 
-	###
+	#Specify solution interval sizes.
 	n_timint = options.timint
 	n_freint = options.freint
 
-	##About modelled sources.
+	#About modelled sources.
 	ra0, dec0 = phase_centre[0], phase_centre[1]
-	arr_srcs = extract_modelsrcs(phase_centre, model)
+	arr_srcs = extract_modelsrcs(phase_centre, skymodel)
 	n_dir = arr_srcs.shape[0]
 
 	#Parameters for basis.
@@ -213,7 +215,10 @@ def main(debugging=False):
 	gparams.update(bparams)
 
 	#
-	calibratewith(data, arr_srcs, bparams, gparams, options.deltachi)
+	data = ms_1D_to_2D(msname, column="DATA", tchunk=1, fchunk=1, n_dir=1, DD=False)
+	#Reshape to row format.
+	ms_2D_to_1D(msname, column="DATA3", in_array=data, tchunk=1, fchunk=1, chan=False, timerow=False, valuetype=None)
+	# calibratewith(data, arr_srcs, bparams, gparams, options.deltachi)
 
 
 	return options, args

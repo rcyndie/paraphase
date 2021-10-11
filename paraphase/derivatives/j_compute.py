@@ -1,15 +1,14 @@
 import numpy as np
 
-def compute_jacobian_residual(self, data_arr, model_arr, gains):
+def j_compute(data, model, gains):
 	"""
 	Returns the Jacobian.
 
 	"""
 
-	#import pdb; pdb.set_trace()
-
 	#Initialise Jacobian.
-	self.jac_shape = [self.n_tim, self.n_fre, self.n_ant, self.n_ant, self.n_cor, self.n_timint, self.n_freint, self.n_ant, self.n_param, self.n_cor] 
+
+	jac_shape = [self.n_tim, self.n_fre, self.n_ant, self.n_ant, self.n_cor, self.n_timint, self.n_freint, self.n_ant, self.n_param, self.n_cor] 
 	jac = np.zeros(self.jac_shape, dtype=self.dtype)
 
 	for t in range(self.n_tim):
@@ -32,6 +31,5 @@ def compute_jacobian_residual(self, data_arr, model_arr, gains):
 
 	##Reshape the Jacobian to a 2D shape.
 	jac = np.reshape(jac, (self.n_tim*self.n_fre*self.n_ant*self.n_ant*self.n_cor, self.n_timint*self.n_freint*self.n_ant*self.n_param*self.n_cor))
-
 
 	return jac

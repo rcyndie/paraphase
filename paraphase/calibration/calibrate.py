@@ -1,6 +1,7 @@
 import numpy as np
 from paraphase.calibration.basis_compute import basis_compute
 from paraphase.calibration.gains_compute import gains_compute
+from paraphase.derivatives.j_compute import j_compute
 
 
 def calibratewith(data, msrcs, bparams, gparams, tol):
@@ -22,7 +23,7 @@ def calibratewith(data, msrcs, bparams, gparams, tol):
 	#For unity gains.
 	alpha = np.zeros(gparams["alpha_shape"], dtype=float)
 	gains = gains_compute(basis, alpha, gparams)
-	# print(gains)
+	jac = j_compute(data, model, gains)
 
 	"""
 	while True:
