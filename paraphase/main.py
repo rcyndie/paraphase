@@ -188,6 +188,9 @@ def main(debugging=False):
 	data = tt.getcol(options.column)
 	tt.close()
 	n_cor = data.shape[2]
+	#Consider a 2 \times 2 shape for n_cor.
+	#Let n_ccor * n_ccor = n_cor.
+	n_ccor = n_cor//2
 
 	#Specify solution interval sizes.
 	n_timint = options.timint
@@ -208,17 +211,25 @@ def main(debugging=False):
 		bparams2 = {"n_par": n_dir, "sigmaf": options.sigmaf, "lscale": options.lscale, "jitter": options.jitter, "kernel": options.kernel}
 		bparams.update(bparams2)
 	
-	#Parameters for gains. 
-	alpha_shape = [n_timint, n_freint, n_ant, n_par, n_cor]
-	gains_shape = [n_dir, n_timint, n_fre, n_ant, n_cor, n_cor]
+	#Parameters for gains.
+	#Consider diagonal gains.
+	alpha_shape = [n_timint, n_freint, n_ant, n_par, n_ccor]
+	gains_shape = [n_dir, n_timint, n_fre, n_ant, n_ccor]
 	gparams = {"chan_freq": chan_freq, "alpha_shape": alpha_shape, "gains_shape": gains_shape}
 	gparams.update(bparams)
 
+	#Parameters for solutions.
+	sparams = {"deltachi": options.deltachi}
+
 	#
-	data = ms_1D_to_2D(msname, column="DATA", tchunk=1, fchunk=1, n_dir=1, DD=False)
-	#Reshape to row format.
-	ms_2D_to_1D(msname, column="DATA3", in_array=data, tchunk=1, fchunk=1, chan=False, timerow=False, valuetype=None)
-	# calibratewith(data, arr_srcs, bparams, gparams, options.deltachi)
+	data_arr = ms_1D_to_2D(msname, column="DATA", tchunk=1, fchunk=1, n_dir=1, DD=False)
+	data_arr = data_arr[:, 0]
+	model_arr = ms_1D_to_2D(msname, "DD_SRC_", tchunk=None, fchunk=1, n_dir=n_dir, DD=True)
+	model_arr = model_arr[0]
+
+	# ms_2D_to_1D(msname, column="DATA3", in_array=data, tchunk=1, fchunk=1, chan=False, timerow=False, valuetype=None)
+
+	calibratewith(data_arr, model_arr, arr_srcs, bparams, gparams, sparams)
 
 
 	return options, args

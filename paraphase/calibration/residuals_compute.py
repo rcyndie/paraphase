@@ -1,6 +1,6 @@
 import numpy as np
 
-def residuals_compute(data_arr, model_arr, gains):
+def residuals_compute(data_arr, model_arr, gains, diag=False):
     """
     The function returns difference between model_arr and data_arr
     at this instance.
@@ -10,7 +10,7 @@ def residuals_compute(data_arr, model_arr, gains):
     #Initialise residuals.
     residuals = data_arr.copy()
 
-    n_tim, n_fre, n_ant, _, n_cor, _ = data_arr.shape
+    n_tim, n_fre, n_ant, _, n_ccor, _ = data_arr.shape
     n_dir = gains.shape[0]
     n_timint = gains.shape[1]
 
@@ -23,4 +23,24 @@ def residuals_compute(data_arr, model_arr, gains):
                         #Subtract model for each direction.
                         residuals[t, f, p, q] -= gains[d, tt, f, p] * model_arr[d, t, f, p, q] * np.conj(gains[d, tt, f, q].T)
 
-    return residuals
+    if diag is True:
+        return get_xx_yy_residual(residuals)
+    else:
+        return np.reshape(residuals, (n_tim*n_fre*n_ant*n_ant*n_ccor*n_ccor))
+
+def get_xx_yy_residual(residuals):
+    """
+    Extract only the XX and YY components from the residuals.
+
+    """
+
+    #
+    n_tim, n_fre, n_ant, _, n_ccor, _ = residuals.shape
+
+    #Initialise the new residuals.
+    new_residual = np.zeros((n_tim, n_fre, n_ant, n_ant, n_ccor), dtype=residual.dtype)
+
+    for k in range(n_ccor):
+        new_residual[..., k] = residual[..., k, k]
+
+    return new_residual.reshape(n_tim*n_fre*n_ant*n_ant*n_ccor)
