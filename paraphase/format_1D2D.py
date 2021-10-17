@@ -73,8 +73,7 @@ def ms_2D_to_1D(msname, column, in_array, tchunk=120, fchunk=1, chan=False, time
     valuetype = valuetype or 'complex'
     # im.argo.addcol(msname=msname, colname=column, valuetype=valuetype)
     add_col(msname, colname=column, valuetype=valuetype, initialiseto=0., clone="DATA")
-    
-    
+
     def _convert_to_1D(data,N):
         """
         convert the 2D timeslots data to 1D data
@@ -134,8 +133,6 @@ def add_col(msname, colname=None, shape=None, valuetype=None, initialiseto=None,
     if colname in ms.colnames():
         print("The column %s already exists!"%colname)
     
-    valuetype = valuetype or "complex"
-
     #getcell(columnname, rownr) << get data from a column cell.
     if shape:
         data_desc = maketabdesc(makearrcoldesc(colname, value=initialiseto, shape=shape, ndim=0, valuetype=valuetype))
