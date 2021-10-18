@@ -162,4 +162,20 @@ def add_col(msname, colname=None, shape=None, valuetype=None, initialiseto=None,
 
     ms.close()
 
+
+def get_xxyy(arr1):
+    """
+    Extract only the autocorrelations from the array arr1.
+
+    """
     
+    #
+    n_ccor = arr1.shape[-1]
+
+    #Initialise the new array.
+    arr2 = np.zeros(arr1.shape[:-1], dtype=arr1.dtype)
+
+    for k in range(n_ccor):
+        arr2[..., k] = arr1[..., k, k]
+
+    return arr2

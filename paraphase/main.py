@@ -12,7 +12,7 @@ from pyrap.tables import table
 from paraphase.calibration.calibrate import calibratewith
 from paraphase.format_1D2D import ms_1D_to_2D
 from paraphase.format_1D2D import ms_2D_to_1D
-# from paraphase.format_1D2D import add_new_col
+from paraphase.format_1D2D import get_xxyy
 
 #Create a custom logger.
 # logger = logging.getLogger(__name__)
@@ -103,6 +103,7 @@ def create_parser(argv=None):
 	p.add_option("--deltachi", dest="deltachi", type=float, help="Specify threshold for solution stagnancy")
 	# p.add_option("--msname", dest="msname", help="Name of measurement set", action="append")
 	p.add_option("--column", dest="column", type=str, help="Name of MS column to read for data", default="DATA")
+	p.add_option("--datadiag", dest="datadiag", action="store_true", help="Specify for diagonal data", default=False)
 	p.add_option("--skymodel", dest="skymodel", type=str, help="Tigger lsm file")
 	p.add_option("--writeto", dest="writeto", type=str, help="Write to output MS column")
 	
@@ -227,10 +228,13 @@ def main(debugging=False):
 	model_arr = ms_1D_to_2D(msname, "DD_SRC_", tchunk=None, fchunk=1, n_dir=n_dir, DD=True)
 	model_arr = model_arr[0]
 
+	if options.datadiag:
+		data_arr = get_xxyy(data_arr)
+		model_arr = get_xxyy(model_arr)
+	
 	# ms_2D_to_1D(msname, column="DATA3", in_array=data, tchunk=1, fchunk=1, chan=False, timerow=False, valuetype=None)
 
-	calibratewith(data_arr, model_arr, arr_srcs, bparams, gparams, sparams)
-
+	calibratewith(data_arr, model_arr, arr_srcs, bparams, gparams, sparams, options.datadiag)
 
 	return options, args
 

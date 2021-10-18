@@ -1,6 +1,7 @@
 import numpy as np
+from paraphase.format_1D2D import get_xxyy
 
-def residuals_compute(data_arr, model_arr, gains, diag=False):
+def residuals_compute(data_arr, model_arr, gains, datadiag=False):
     """
     The function returns difference between model_arr and data_arr
     at this instance.
@@ -10,9 +11,9 @@ def residuals_compute(data_arr, model_arr, gains, diag=False):
     #Initialise residuals.
     residuals = data_arr.copy()
 
-    n_tim, n_fre, n_ant, _, n_ccor, _ = data_arr.shape
-    n_dir = gains.shape[0]
+    n_dir, n_timint, n_fre, n_ant, n_ccor = gains.shape
     n_timint = gains.shape[1]
+    n_tim = data_arr.shape[0]
 
     for t in range(n_tim):
         tt = t//n_timint
@@ -20,27 +21,13 @@ def residuals_compute(data_arr, model_arr, gains, diag=False):
             for p in range(n_ant):
                 for q in range(p): #note only doing this for q < p
                     for d in range(n_dir):
-                        #Subtract model for each direction.
-                        residuals[t, f, p, q] -= gains[d, tt, f, p] * model_arr[d, t, f, p, q] * np.conj(gains[d, tt, f, q].T)
+                        for k in range(n_ccor):
+                            #Subtract model for each direction.
+                            if datadiag:
+                                residuals[t, f, p, q, k] -= gains[d, tt, f, p, k] * model_arr[d, t, f, p, q, k] * np.conj(gains[d, tt, f, q, k].T)
+                            else:
+                                residuals[t, f, p, q, k, k] -= gains[d, tt, f, p, k] * model_arr[d, t, f, p, q, k, k] * np.conj(gains[d, tt, f, q, k].T)
 
-    if diag is True:
-        return get_xx_yy_residual(residuals)
-    else:
-        return np.reshape(residuals, (n_tim*n_fre*n_ant*n_ant*n_ccor*n_ccor))
+                    residuals[t, f, q, p] = np.conj(residuals[t, f, p, q])
 
-def get_xx_yy_residual(residuals):
-    """
-    Extract only the XX and YY components from the residuals.
-
-    """
-
-    #
-    n_tim, n_fre, n_ant, _, n_ccor, _ = residuals.shape
-
-    #Initialise the new residuals.
-    new_residual = np.zeros((n_tim, n_fre, n_ant, n_ant, n_ccor), dtype=residual.dtype)
-
-    for k in range(n_ccor):
-        new_residual[..., k] = residual[..., k, k]
-
-    return new_residual.reshape(n_tim*n_fre*n_ant*n_ant*n_ccor)
+    return np.reshape(residuals, residuals.size)

@@ -1,14 +1,15 @@
 import numpy as np
 
-def j_compute(data_arr, model_arr, gains, gparams, alpha, basis):
+def j_compute(data_arr, model_arr, gains, gparams, alpha, basis, datadiag=None):
 	"""
 	Returns the Jacobian.
 
 	"""
-	
-	n_timint, n_freint, n_ant, n_par, n_ccor = alpha.shape
-	n_dir, _, n_fre, _, _ = gains.shape
+
+	n_dir, n_timint, n_fre, n_ant, n_ccor = gains.shape
 	n_tim = data_arr.shape[0]
+	n_par = gparams["n_par"]
+	n_freint = gparams["alpha_shape"][1]
 
 	#Initialise Jacobian.
 	jac = np.zeros(data_arr.shape+alpha.shape, dtype=data_arr.dtype)
@@ -24,13 +25,14 @@ def j_compute(data_arr, model_arr, gains, gparams, alpha, basis):
 							for param in range(n_par):
 								#Get partial derivative of the phase.
 								dphidalpha = 1.0j * gparams["chan_freq"][f] * basis[param, d]
-								jac[t, f, p, q, k, k, tt, ff, p, param, k] += dphidalpha * gains[d, tt, f, p, k] * model_arr[d, t, f, p, q, k, k] * np.conj(gains[d, tt, f, q, k]).T
-								jac[t, f, p, q, k, k, tt, ff, q, param, k] += -dphidalpha * gains[d, tt, f, p, k] * model_arr[d, t, f, p, q, k, k] * np.conj(gains[d, tt, f, q, k]).T
-
+								#if diagonal data, consider
+								if datadiag:
+									jac[t, f, p, q, k, tt, ff, p, param, k] += dphidalpha * gains[d, tt, f, p, k]* model_arr[d, t, f, p, q, k] * np.conj(gains[d, tt, f, q, k].T)
+									jac[t, f, p, q, k, tt, ff, q, param, k] += -dphidalpha * gains[d, tt, f, p, k]* model_arr[d, t, f, p, q, k] * np.conj(gains[d, tt, f, q, k].T)
+								else:
+									jac[t, f, p, q, k, k, tt, ff, p, param, k] += dphidalpha * gains[d, tt, f, p, k]* model_arr[d, t, f, p, q, k, k] * np.conj(gains[d, tt, f, q, k].T)
+									jac[t, f, p, q, k, k, tt, ff, q, param, k] += -dphidalpha * gains[d, tt, f, p, k]* model_arr[d, t, f, p, q, k, k] * np.conj(gains[d, tt, f, q, k].T)
 					#Set [q,p] element as conjugate of [p,q].
 					jac[t, f, q, p] = np.conj(jac[t, f, p, q])
 
-	jac = np.reshape(jac, (n_tim*n_fre*n_ant*n_ant*n_ccor*n_ccor, n_timint*n_freint*n_ant*n_par*n_ccor))
-
-	return jac
-	
+	return np.reshape(jac, (data_arr.size, alpha.size))
