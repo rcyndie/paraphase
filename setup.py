@@ -13,6 +13,7 @@ requirements = [
 				# 'yaml',
 				'PyYAML',
 				'astro-tigger-lsm',
+				'matplotlib',
 				]
 
 
