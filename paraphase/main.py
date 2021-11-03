@@ -4,7 +4,8 @@ import configparser
 import argparse
 # import pyyaml
 # from yaml.loader import SafeLoader
-import sys
+import os
+
 import paraphase
 import Tigger
 from optparse import OptionParser
@@ -13,6 +14,7 @@ from paraphase.calibration.calibrate import calibratewith
 from paraphase.format_1D2D import ms_1D_to_2D
 from paraphase.format_1D2D import ms_2D_to_1D
 from paraphase.format_1D2D import get_xxyy
+
 
 #Create a custom logger.
 # logger = logging.getLogger(__name__)
@@ -88,9 +90,9 @@ def create_parser(argv=None):
 	"""
 
 	p = OptionParser(usage='%prog [options] msname')
-	# p.add_option("-c", "--config", help="Specify configuration file", metavar="FILE", default="default.yml", action="append")
+	# p.add_option("-c", "--config", help="Specify configuration file", metavar="FILE", default="default.yml", action="append"
 	p.add_option("-l", "--list", dest="dolist", action="store_true", help="List MS properties and exit", default=False)
-	p.add_option("--save-to", dest="save-to", type=str, help="Save gains to this address")
+	p.add_option("--outputdir", dest="outputdir", help="Save output to this address", default="")
 	p.add_option("--timint", dest="timint", type=int, help="Size of solution time interval")
 	p.add_option("--freint", dest="freint", type=int, help="Size of solution frequency interval")
 	p.add_option("--freqf", dest="freqf", type=str, help="Specify function for frequency dependence", default="linear")
@@ -100,7 +102,9 @@ def create_parser(argv=None):
 	p.add_option("--sigmaf", dest="sigmaf", type=float, help="Standard deviation which controls vertical scaling for gtype-pcov", default=1000.0)
 	p.add_option("--lscale", dest="lscale", type=float, help="Specify input length-scale for gtype-pcov", default=1.0)
 	p.add_option("--jitter", dest="jitter", type=float, help="Specify jitter for Cholesky decomposition for gtype-pcov", default=1e-6)
-	p.add_option("--deltachi", dest="deltachi", type=float, help="Specify threshold for solution stagnancy")
+	p.add_option("--deltachi", dest="deltachi", type=float, help="Specify threshold for solution stagnancy", default=1e-3)
+	p.add_option("--lambda1", dest="lambda1", type=float, help="Specify damping parameter for GN/LM/GD update", default=1.0)
+	p.add_option("--itermax", dest="itermax", type=int, help="Specify maximum number of iterations for Gauss-Newton", default=30)
 	# p.add_option("--msname", dest="msname", help="Name of measurement set", action="append")
 	p.add_option("--column", dest="column", type=str, help="Name of MS column to read for data", default="DATA")
 	p.add_option("--datadiag", dest="datadiag", action="store_true", help="Specify for diagonal data", default=False)
@@ -152,6 +156,7 @@ def main(debugging=False):
 	(options, args) = create_parser().parse_args()
 
 	skymodel = options.skymodel
+	outputdir = options.outputdir
 
 	if len(args) != 1:
 		ri('Please specify a Measurement Set to calibrate.')
@@ -193,6 +198,14 @@ def main(debugging=False):
 	#Let n_ccor * n_ccor = n_cor.
 	n_ccor = n_cor//2
 
+	#About output directory.
+	if os.path.isdir(outputdir):
+		print("Found folder "+outputdir+"!")
+	else:
+		outputdir = msname.rsplit("/", 1)[0]+"/output/"
+		os.mkdir(outputdir)
+	
+
 	#Specify solution interval sizes.
 	n_timint = options.timint
 	n_freint = options.freint
@@ -220,7 +233,7 @@ def main(debugging=False):
 	gparams.update(bparams)
 
 	#Parameters for solutions.
-	sparams = {"deltachi": options.deltachi}
+	sparams = {"deltachi": options.deltachi, "lambda1": options.lambda1, "itermax": options.itermax, "outputdir": outputdir}
 
 	#
 	data_arr = ms_1D_to_2D(msname, column="DATA", tchunk=1, fchunk=1, n_dir=1, DD=False)
@@ -234,6 +247,7 @@ def main(debugging=False):
 	
 	# ms_2D_to_1D(msname, column="DATA3", in_array=data, tchunk=1, fchunk=1, chan=False, timerow=False, valuetype=None)
 
+	
 	calibratewith(data_arr, model_arr, arr_srcs, bparams, gparams, sparams, options.datadiag)
 
 	return options, args
