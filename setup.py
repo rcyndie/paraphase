@@ -14,6 +14,7 @@ requirements = [
 				'PyYAML',
 				'astro-tigger-lsm',
 				'matplotlib',
+				'tqdm',
 				]
 
 
