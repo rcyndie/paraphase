@@ -15,6 +15,7 @@ requirements = [
 				'astro-tigger-lsm',
 				'matplotlib',
 				'tqdm',
+				'pytest',
 				]
 
 
