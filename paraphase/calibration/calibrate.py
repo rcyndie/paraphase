@@ -10,6 +10,8 @@ from paraphase.derivatives.jhj_compute import jhj_compute
 from paraphase.calibration.residuals_compute import residuals_compute
 from paraphase.derivatives.jhr_compute import jhr_compute
 from paraphase.calibration.plot_generate import chi2_plot
+from paraphase.calibration.plot_generate import jhj_plot
+from paraphase.calibration.plot_generate import jac_plot
 
 
 def calibratewith(data_arr, model_arr, msrcs, bparams, gparams, sparams, datadiag=None):
@@ -22,7 +24,7 @@ def calibratewith(data_arr, model_arr, msrcs, bparams, gparams, sparams, datadia
 	#
 	basis = basis_compute(msrcs, bparams)
 	#For unity gains.
-	alpha = np.zeros(gparams["alpha_shape"], dtype=float)
+	alpha = 0.1*np.ones(gparams["alpha_shape"], dtype=float)
 	gains = gains_compute(basis, alpha, gparams)
 
 	#Compute an initial Chi2 value.
@@ -30,7 +32,6 @@ def calibratewith(data_arr, model_arr, msrcs, bparams, gparams, sparams, datadia
 	dof = data_arr.size - alpha.size
 	chi20 = (np.linalg.norm(residuals)) / dof
 	chi2_arr = np.array([chi20])
-
 	
 	for itern in tqdm(range(sparams["itermax"]), desc="DDCalibrating"):
 		jac = j_compute(data_arr, model_arr, gains, gparams, alpha, basis, datadiag=datadiag)
@@ -58,7 +59,7 @@ def calibratewith(data_arr, model_arr, msrcs, bparams, gparams, sparams, datadia
 		chi2_arr = np.append(chi2_arr, chi2i)
 		
 		if chi2i < sparams["deltachi"]:
-			print("Reached solution stagnancy at iternation number ", itern)
+			print("Reached solution stagnancy at iteration number ", itern)
 			break
 		
 		if gparams["gtype"] == "ppoly":
@@ -72,6 +73,8 @@ def calibratewith(data_arr, model_arr, msrcs, bparams, gparams, sparams, datadia
 		time.sleep(0.01)
 	
 	np.save(sparams["outputdir"]+"/alpha.npy", alpha)
+	jac_plot(jac, sparams)
+	jhj_plot(jhj, sparams)
 	chi2_plot(chi2_arr, sparams)
 
 def delta_compute(alpha, jhj, jhr, gparams, sparams):

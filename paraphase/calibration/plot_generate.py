@@ -24,3 +24,35 @@ def chi2_plot(arr1, sparams):
     fig.savefig(sparams["outputdir"]+"/Chi2.pdf")
     plt.close("all")
 
+def jhj_plot(jhj, sparams):
+    """
+    Plotting JHJ.
+
+    """
+    
+    fig = plt.figure('jhj real')
+    plt.title("Re(JHJ)")
+    plt.imshow(jhj.real)
+    plt.colorbar()
+    fig.savefig(sparams["outputdir"]+"/jhj_re.pdf")
+    plt.close("all")
+
+def jac_plot(jac, sparams):
+    """
+    Plotting Jacobian.
+    
+    """
+
+    fig = plt.figure('Jacobian')
+    plt.title("Re(J)")
+    plt.imshow(jac.real, aspect="auto")
+    plt.colorbar()
+    fig.savefig(sparams["outputdir"]+"/jac_re.pdf")
+    plt.close("all")
+
+    fig = plt.figure('Jacobian')
+    plt.title("Im(J)")
+    plt.imshow(jac.imag, aspect="auto")
+    plt.colorbar()
+    fig.savefig(sparams["outputdir"]+"/jac_im.pdf")
+    plt.close("all")

@@ -1,15 +1,16 @@
 import numpy as np
 
-def make_basis_vec(n_par, l_s, m_s):
+def make_basis_vec(n_par, l_d, m_d):
     """
     Generating the basis polynomial to compute the phase equation. Right now, 
-    it is of the form [1, l_s, m_s, l_s**2, m_s**2, ...] with l_s and m_s being 
+    it is of the form [1, l_d, m_d, l_d**2, m_d**2, ...] with l_d and m_d being 
     scalars. The function returns a vector of length n_par.
+
     """
     
     N = (n_par+1) // 2
-    lvec = (np.tile(l_s, N-1) ** np.arange(1, N))
-    mvec = (np.tile(m_s, N-1) ** np.arange(1, N))
+    lvec = (np.tile(l_d, N-1) ** np.arange(1, N))
+    mvec = (np.tile(m_d, N-1) ** np.arange(1, N))
 
     main_vec = np.ones((N-1, 2))
     main_vec[:, 0] = lvec
@@ -32,8 +33,8 @@ def get_basis_poly(sources, n_par):
     n_dir = sources.shape[0]
     basis = np.zeros((n_par, n_dir))
 
-    for s in range(n_dir):
-        basis[:, s] = make_basis_vec(n_par, l[s], m[s])
+    for d in range(n_dir):
+        basis[:, d] = make_basis_vec(n_par, l[d], m[d])
 
     return basis
 
