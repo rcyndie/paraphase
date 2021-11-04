@@ -60,6 +60,13 @@ def calibratewith(data_arr, model_arr, msrcs, bparams, gparams, sparams, datadia
 		if chi2i < sparams["deltachi"]:
 			print("Reached solution stagnancy at iternation number ", itern)
 			break
+		
+		if gparams["gtype"] == "ppoly":
+			if chi2i > chi2_arr[itern-1]:
+				sparams["lambda1"] = sparams["lambda1"] * sparams["stepk"]
+			else:
+				chi2_arr[itern-1] = chi2i
+				sparams["lambda1"] = sparams["lambda1"] / sparams["stepk"]
 
 		#Progress bar?!
 		time.sleep(0.01)
@@ -74,19 +81,17 @@ def delta_compute(alpha, jhj, jhr, gparams, sparams):
 	"""
 
 	n_timint, n_freint, n_ant, n_par, n_ccor = gparams["alpha_shape"]
+	n_parccor = n_par*n_ccor
 
 	#Initialise delta_alpha.
-	delta_alpha = np.zeros((n_timint*n_freint*n_ant, n_par*n_ccor), dtype=alpha.dtype)
+	delta_alpha = np.zeros((n_timint*n_freint*n_ant, n_parccor), dtype=alpha.dtype)
 	x = np.reshape(alpha, delta_alpha.shape)
 
 	for k in range(n_timint*n_freint*n_ant):
-		block_jhj = jhj[k*n_par*n_ccor:(k+1)*n_par*n_ccor, k*n_par*n_ccor:(k+1)*n_par*n_ccor]
+		block_jhj = jhj[k*n_parccor:(k+1)*n_parccor, k*n_parccor:(k+1)*n_parccor]
 		if gparams["gtype"] == "ppoly":
-			delta_alpha[k] = (np.linalg.solve(block_jhj + sparams["lambda1"]*np.diag(block_jhj), jhr[k*n_par*n_ccor:(k+1)*n_par*n_ccor])).real
+			delta_alpha[k] = (np.linalg.solve(block_jhj + sparams["lambda1"]*np.diag(block_jhj), jhr[k*n_parccor:(k+1)*n_parccor])).real
 		elif gparams["gtype"] == "pcov":
-			delta_alpha[k] = (np.linalg.solve(block_jhj + np.eye(block_jhj.shape[0]), jhr[k*n_par*n_ccor:(k+1)*n_par*n_ccor] - x[k])).real
+			delta_alpha[k] = (np.linalg.solve(block_jhj + np.eye(block_jhj.shape[0]), jhr[k*n_parccor:(k+1)*n_parccor] - x[k])).real
 	
 	return delta_alpha.reshape(gparams["alpha_shape"])
-
-
-
