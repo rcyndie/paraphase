@@ -103,7 +103,8 @@ def create_parser(argv=None):
 	p.add_option("--lscale", dest="lscale", type=float, help="Specify input length-scale for gtype-pcov", default=1.0)
 	p.add_option("--jitter", dest="jitter", type=float, help="Specify jitter for Cholesky decomposition for gtype-pcov", default=1e-6)
 	p.add_option("--deltachi", dest="deltachi", type=float, help="Specify threshold for solution stagnancy", default=1e-3)
-	p.add_option("--lambda1", dest="lambda1", type=float, help="Specify damping parameter for GN/LM/GD update", default=1.0)
+	p.add_option("--lambda1", dest="lambda1", type=float, help="Specify damping parameter for GN/LM/GD update", default=0.1)
+	p.add_option("--stepk", dest="stepk", type=float, help="Specify ...", default=10.)
 	p.add_option("--itermax", dest="itermax", type=int, help="Specify maximum number of iterations for Gauss-Newton", default=30)
 	# p.add_option("--msname", dest="msname", help="Name of measurement set", action="append")
 	p.add_option("--column", dest="column", type=str, help="Name of MS column to read for data", default="DATA")
@@ -199,12 +200,13 @@ def main(debugging=False):
 	n_ccor = n_cor//2
 
 	#About output directory.
-	if os.path.isdir(outputdir):
-		print("Found folder "+outputdir+"!")
-	else:
+	#and, make output directory if it does not exist.
+	if not os.path.exists(outputdir):
 		outputdir = msname.rsplit("/", 1)[0]+"/output/"
-		os.mkdir(outputdir)
-	
+		try:
+			os.mkdir(outputdir)
+		except OSError:
+			pass
 
 	#Specify solution interval sizes.
 	n_timint = options.timint
@@ -233,7 +235,7 @@ def main(debugging=False):
 	gparams.update(bparams)
 
 	#Parameters for solutions.
-	sparams = {"deltachi": options.deltachi, "lambda1": options.lambda1, "itermax": options.itermax, "outputdir": outputdir}
+	sparams = {"deltachi": options.deltachi, "lambda1": options.lambda1, "stepk": options.stepk, "itermax": options.itermax, "outputdir": outputdir}
 
 	#
 	data_arr = ms_1D_to_2D(msname, column="DATA", tchunk=1, fchunk=1, n_dir=1, DD=False)
