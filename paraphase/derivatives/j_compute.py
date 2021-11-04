@@ -21,14 +21,14 @@ def j_compute(data_arr, model_arr, gains, gparams, alpha, basis, datadiag=None):
 			for p in range(n_ant):
 				for q in range(p):  #note only doing this for q < p
 					for d in range(n_dir):
-						for k in range(n_ccor):
-							for param in range(n_par):
+						for param in range(n_par):
+							for k in range(n_ccor):
 								#Get partial derivative of the phase.
-								dphidalpha = 1.0j * gparams["chan_freq"][f] * basis[param, d]
+								dphidalpha = 1.0j * gparams["chan_freq"][f] * basis[d, param]
 								#if diagonal data, consider
 								if datadiag:
-									jac[t, f, p, q, k, tt, ff, p, param, k] += dphidalpha * gains[d, tt, f, p, k]* model_arr[d, t, f, p, q, k] * np.conj(gains[d, tt, f, q, k].T)
-									jac[t, f, p, q, k, tt, ff, q, param, k] += -dphidalpha * gains[d, tt, f, p, k]* model_arr[d, t, f, p, q, k] * np.conj(gains[d, tt, f, q, k].T)
+									jac[t, f, p, q, k, tt, ff, p, d, k] += dphidalpha * gains[d, tt, f, p, k]* model_arr[d, t, f, p, q, k] * np.conj(gains[d, tt, f, q, k].T)
+									jac[t, f, p, q, k, tt, ff, q, d, k] += -dphidalpha * gains[d, tt, f, p, k]* model_arr[d, t, f, p, q, k] * np.conj(gains[d, tt, f, q, k].T)
 								else:
 									jac[t, f, p, q, k, k, tt, ff, p, param, k] += dphidalpha * gains[d, tt, f, p, k]* model_arr[d, t, f, p, q, k, k] * np.conj(gains[d, tt, f, q, k].T)
 									jac[t, f, p, q, k, k, tt, ff, q, param, k] += -dphidalpha * gains[d, tt, f, p, k]* model_arr[d, t, f, p, q, k, k] * np.conj(gains[d, tt, f, q, k].T)
