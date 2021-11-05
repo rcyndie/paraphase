@@ -37,7 +37,7 @@ def j_compute(data_arr, model_arr, gains, gparams, alpha, basis, datadiag=None):
 
 	return np.reshape(jac, (data_arr.size, alpha.size))
 
-def j_compute_slow(data_arr, model_arr, freq, alpha, fprofile, basis, l, m):
+def j_compute_slow(data_arr, model_arr, freq, alpha, fprofile, basis, lcoord, mcoord):
 	"""
 	Returns the Jacobian.
 
@@ -64,16 +64,23 @@ def j_compute_slow(data_arr, model_arr, freq, alpha, fprofile, basis, l, m):
 									for cc in range(ncorr):
 										for par in range(npar):
 											for s in range(nsource):
+												model = model_arr[t, f, p, q, c, s]
 												#Get partial derivative of the phase.
 												if ant==p and cc==c and tt==t//ntimeint and ff==f//nchanint:
-													dphidalpha = 1.0j*fprof*basis(l[s], m[s], alpha[tt, ff, ant, cc])
-													gp = np.exp(dphidalpha)
-													gq = 1.0j*fprof*basis(l[s], m[s], alpha[tt, ff, q, cc])
-													jac[t, f, p, q, c, tt, ff, ant, cc, par] += dphidalpha * gp * model_arr[t, f, p, q, c, s] * np.conj(gq)
+													L = basis(lcoord[s], mcoord[s])
+													Lalpha = L.dot(alpha[tt, ff, ant, cc])
+													prefact = L[par]
+													phase = 1.0j*fprof*Lalpha
+													gp = np.exp(phase)
+													gq = np.exp(1.0j*fprof*L.dot(alpha[tt, ff, q, cc]))
+													jac[t, f, p, q, c, tt, ff, ant, cc, par] += prefact * phase * gp * model * np.conj(gq)
 												elif ant==q and cc==c and tt==t//ntimeint and ff==f//nchanint:
-													dphidalpha = 1.0j*fprof*basis(l[s], m[s], alpha[tt, ff, ant, cc])
-													gp = 1.0j*fprof*basis(l[s], m[s], alpha[tt, ff, p, cc])
-													gq = np.exp(dphidalpha)
-													jac[t, f, p, q, c, tt, ff, ant, cc, par] += -dphidalpha*gp*model_arr[t, f, p, q, c, s] * np.conj(gq)
+													L = basis(lcoord[s], mcoord[s])
+													Lalpha = L.dot(alpha[tt, ff, ant, cc])
+													prefact = L[par]
+													phase = 1.0j*fprof*Lalpha
+													gq = np.exp(phase)
+													gp = np.exp(1.0j*fprof*L.dot(alpha[tt, ff, p, cc]))
+													jac[t, f, p, q, c, tt, ff, ant, cc, par] -= prefact * phase * gp * model * np.conj(gq)
 
-	return np.reshape(jac, (data_arr.size, alpha.size))
+	return jac
