@@ -58,7 +58,7 @@ def calibratewith(data_arr, model_arr, msrcs, bparams, gparams, sparams, datadia
 		chi2_arr = np.append(chi2_arr, chi2i)
 		
 		if chi2i < sparams["deltachi"]:
-			print("Reached solution stagnancy at iternation number ", itern)
+			print("Reached solution stagnancy at iteration number ", itern)
 			break
 		
 		if gparams["gtype"] == "ppoly":
