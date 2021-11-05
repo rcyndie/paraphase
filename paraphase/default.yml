@@ -1,0 +1,16 @@
+[data]
+    ms: test.ms
+    column: DATA
+
+[g]
+    save-to: gains.npy
+    type: ppoly
+    time-int: 1
+    freq-int: 1
+
+
+[sky]
+    model: test.lsm
+
+[out]
+    writeto: RESIDUAL
