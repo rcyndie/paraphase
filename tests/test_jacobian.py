@@ -92,8 +92,8 @@ def test_jacobian():
                                                         vislow = vis_func(ant, par, -1, delta)
                                                         deriv = (vishigh - vislow)/(2*delta)
                                                         diffs[i] = np.abs(j - 2*deriv)
-                                                    print(diffs[0]/diffs[1])
-                                                    assert np.allclose(diffs[0]/diffs[1], deltas[0]/deltas[1], atol=1)
+                                                    assert np.allclose(diffs[0]/diffs[1], deltas[0]/deltas[1],
+                                                                       atol=1)
 
 
 
