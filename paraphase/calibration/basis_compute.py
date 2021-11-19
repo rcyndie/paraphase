@@ -1,6 +1,7 @@
+from types import NoneType
 import numpy as np
 
-def make_basis_vec(n_par, l_d, m_d):
+def make_basis_vec(l_d, m_d, n_par):
     """
     Generating the basis polynomial to compute the phase equation. Right now, 
     it is of the form [1, l_d, m_d, l_d**2, m_d**2, ...] with l_d and m_d being 
@@ -9,6 +10,7 @@ def make_basis_vec(n_par, l_d, m_d):
     """
     
     N = (n_par+1) // 2
+    print(N)
     lvec = (np.tile(l_d, N-1) ** np.arange(1, N))
     mvec = (np.tile(m_d, N-1) ** np.arange(1, N))
 
@@ -19,6 +21,47 @@ def make_basis_vec(n_par, l_d, m_d):
     
     return np.insert(main_vec, 0, [1])
 
+
+def polynomial_expression(ld, md, bparams):
+    """
+    Returns a vector space corresponding to a degpoly degree of polynomial
+    basis.
+
+    """
+
+    degpoly = bparams["degpoly"]
+
+    if degpoly == 0:
+        print("Unparametrised phase-only Jones selected.")
+        return np.array([1])
+    elif degpoly > 0:
+        #Vector space for the basis.
+        # array([1, l, m, l**2, m**2, l*m, ...])
+        arr0 = np.array([1])
+        for i in range(1, degpoly+1):
+            arr1 = np.array([ld**i, md**i])
+            #About the cross terms.
+            for j in range(1, i+1):
+                if i+j <= degpoly:
+                    if i == j:
+                        arr2 = np.array([(ld**i)*(md**j)])
+                    elif i != j:
+                        arr2 = np.array([(ld**i)*(md**j), (ld**j)*(md**i)])
+                    arr1 = np.append(arr1, arr2)
+
+            arr0 = np.append(arr0, arr1)
+        print("Length of array0", len(arr0))
+        return arr0
+
+def get_basis_poly1(lcoordi, mcoordi, n_par):
+    """
+    Define a linear basis gtype operator. 
+
+    """
+
+    return make_basis_vec(lcoordi, mcoordi, n_par)
+
+    
 def get_basis_poly(sources, n_par):
     """
     Get basis matrix of shape (n_params, n_dir). Both l and m, which represent the
@@ -34,9 +77,10 @@ def get_basis_poly(sources, n_par):
     basis = np.zeros((n_par, n_dir))
 
     for d in range(n_dir):
-        basis[:, d] = make_basis_vec(n_par, l[d], m[d])
+        basis[:, d] = make_basis_vec(l[d], m[d], n_par)
 
     return basis
+
 
 def get_basis_cov(sources, bparams):
     """
@@ -92,6 +136,7 @@ def basis_compute(msrcs, bparams):
     """
 
     if bparams["gtype"] == "ppoly":
+        polynomial_expression(msrcs[0, 0], msrcs[0, 0], bparams)
         return get_basis_poly(msrcs, bparams["n_par"])
     elif bparams["gtype"] == "pcov":
         return get_basis_cov(msrcs, bparams)
