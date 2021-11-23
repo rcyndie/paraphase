@@ -2,8 +2,9 @@ import numpy as np
 from functools import partial
 import pytest
 from paraphase.derivatives.j_compute import j_compute_slow
+from paraphase.derivatives.j_compute import j_compute
 
-def test_jacobian():
+def test_jacobian(datadiag=True):
     # defined coordinates
     nchan = 3
     freq = np.linspace(0.5, 1.5, nchan)
@@ -20,7 +21,7 @@ def test_jacobian():
     # For nt_int = 1 and nf_int 1 we have
     # (nant - 1)/2 >= ndir
     nant = 7
-    ncorr = 1
+    ncorr = 2
 
     # parameters
     nparam = 3
@@ -38,9 +39,9 @@ def test_jacobian():
     #     return L[s, :]
 
     # model vis
-    model_arr = (np.random.randn(ntime, nchan, nant, nant, ncorr, nsource) +
-                 1j*np.random.randn(ntime, nchan, nant, nant, ncorr, nsource))
-
+    model_arr = (np.random.randn(nsource, ntime, nchan, nant, nant, ncorr) +
+                1j*np.random.randn(nsource, ntime, nchan, nant, nant, ncorr))
+    
     # vis
     vis_arr = np.zeros((ntime, nchan, nant, nant, ncorr), dtype=np.complex128)
     for t in range(ntime):
@@ -55,10 +56,13 @@ def test_jacobian():
                             phasep = basis(lcoord[s], mcoord[s]).dot(alpha[tt, ff, p, c])
                             phaseq = basis(lcoord[s], mcoord[s]).dot(alpha[tt, ff, q, c])
                             vis_arr[t, f, p, q, c] += (np.exp(1j*fprof*phasep) *
-                                    model_arr[t, f, p, q, c, s] * np.exp(-1j*fprof*phaseq))
+                                    model_arr[s, t, f, p, q, c] * np.exp(-1j*fprof*phaseq))
 
-    # evaluate jacobian
+    # evaluate jacobian with j_compute_slow.
     jacobian = j_compute_slow(vis_arr, model_arr, freq, alpha, fprofile, basis, lcoord, mcoord)
+
+    # Test current implementation of Jacobian against j_compute_slow.
+    jacobian2 = j_compute(vis_arr, model_arr, lcoord, mcoord, alpha, freq, fprofile, basis, datadiag)
 
     # test against finite differences
     deltas = [1e-2, 1e-3]
@@ -70,7 +74,8 @@ def test_jacobian():
                     for q in range(nant):
                         # end of data axes
                         jac = jacobian[t, f, p, q, c]
-                        model = model_arr[t, f, p, q, c]
+                        jac2 = jacobian2[t, f, p, q, c]
+                        model = model_arr[:, t, f, p, q, c]
                         # start of param axes
                         for tt in range(ntimeint):
                             for ff in range(nchanint):
@@ -85,21 +90,24 @@ def test_jacobian():
                                             if (ant==p or ant==q):
                                                 for par in range(nparam):
                                                     j = jac[tt, ff, ant, cc, par]
+                                                    j2 = jac2[tt, ff, ant, cc, par]
                                                     derivs = np.zeros(3, dtype=model.dtype)
                                                     diffs = np.zeros(3)
+                                                    diffs2 = np.zeros(3)
                                                     for i, delta in enumerate(deltas):
                                                         vishigh = vis_func(ant, par, 1, delta)
                                                         vislow = vis_func(ant, par, -1, delta)
                                                         deriv = (vishigh - vislow)/(2*delta)
                                                         diffs[i] = np.abs(j - 2*deriv)
-                                                    assert np.allclose(diffs[0]/diffs[1], deltas[0]/deltas[1],
+                                                        diffs2[i] = np.abs(j2 - j)
+                                                    # assert np.allclose(diffs[0]/diffs[1], deltas[0]/deltas[1],
+                                                                    #    atol=1)
+                                                    assert np.allclose(diffs2[0]/diffs2[1], deltas[0]/deltas[1],
                                                                        atol=1)
 
 
-
-
 def vis_model(ant, par, sign, delta, p, q, alphas, model, lcoord, mcoord, fprof, basis):
-    print(ant, par, sign)
+    # print(ant, par, sign)
     nsource = model.size
     vis = 0j
     alpha = alphas[ant]
@@ -118,4 +126,5 @@ def vis_model(ant, par, sign, delta, p, q, alphas, model, lcoord, mcoord, fprof,
     return vis
 
 
+##Running tests.
 test_jacobian()
