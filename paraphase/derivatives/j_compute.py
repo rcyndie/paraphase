@@ -1,41 +1,57 @@
 import numpy as np
+	
 
-def j_compute(data_arr, model_arr, gains, gparams, alpha, basis, datadiag=None):
+def j_compute(data_arr, model_arr, lcoord, mcoord, alpha, chan_freq, freqf, basis, datadiag=None):
 	"""
-	Returns the Jacobian.
+	Evaluates Jacobian and treat 'basis' as an operator.
 
 	"""
 
-	n_dir, n_timint, n_fre, n_ant, n_ccor = gains.shape
+	n_dir = model_arr.shape[0]
 	n_tim = data_arr.shape[0]
-	n_par = gparams["n_par"]
-	n_freint = gparams["alpha_shape"][1]
+	n_fre = data_arr.shape[1]
+	n_timint, n_freint, n_ant, n_ccor, n_par = alpha.shape
+
+	#Remember, t_int is size of the interval and
+	#n_timint is the number of intervals.
+	t_int = n_tim//n_timint
+	f_int = n_fre//n_freint
 
 	#Initialise Jacobian.
 	jac = np.zeros(data_arr.shape+alpha.shape, dtype=data_arr.dtype)
 
 	for t in range(n_tim):
-		tt = t//n_timint
+		tt = t//t_int
 		for f in range(n_fre):
-			ff = f//n_freint
+			ff = f//f_int
+			fprof = freqf(chan_freq[f])
 			for p in range(n_ant):
-				for q in range(p):  #note only doing this for q < p
-					for d in range(n_dir):
-						for k in range(n_ccor):
-							for param in range(n_par):
+				for q in range(n_ant):
+					for c in range(n_ccor):
+						# end of data axes
+						if datadiag:
+							model = model_arr[:, t, f, p, q, c]
+						else:
+							model = model_arr[:, t, f, p, q, c, c]
+						# start of param axes
+						for par in range(n_par):
+							for d in range(n_dir):
 								#Get partial derivative of the phase.
-								dphidalpha = 1.0j * gparams["chan_freq"][f] * basis[d, param]
-								#if diagonal data, consider,
+								L = basis(lcoord[d], mcoord[d])
+								Lalphap = L.dot(alpha[tt, ff, p, c])
+								Lalphaq = L.dot(alpha[tt, ff, q, c])
+								prefact = 1j * L[par] * fprof
+								gp = np.exp(1.0j * fprof * Lalphap)
+								gq = np.exp(1.0j * fprof * Lalphaq)
 								if datadiag:
-									jac[t, f, p, q, k, tt, ff, p, param, k] += dphidalpha * gains[d, tt, f, p, k]* model_arr[d, t, f, p, q, k] * np.conj(gains[d, tt, f, q, k].T)
-									jac[t, f, p, q, k, tt, ff, q, param, k] += -dphidalpha * gains[d, tt, f, p, k]* model_arr[d, t, f, p, q, k] * np.conj(gains[d, tt, f, q, k].T)
-								# else:
-								# 	jac[t, f, p, q, k, k, tt, ff, p, param, k] += dphidalpha * gains[d, tt, f, p, k]* model_arr[d, t, f, p, q, k, k] * np.conj(gains[d, tt, f, q, k].T)
-								# 	jac[t, f, p, q, k, k, tt, ff, q, param, k] += -dphidalpha * gains[d, tt, f, p, k]* model_arr[d, t, f, p, q, k, k] * np.conj(gains[d, tt, f, q, k].T)
-					# Set [q,p] element as conjugate of [p,q].
-					jac[t, f, q, p] = np.conj(jac[t, f, p, q])
+									jac[t, f, p, q, c, tt, ff, p, c, par] += prefact * gp * model[d] * np.conj(gq)
+									jac[t, f, p, q, c, tt, ff, q, c, par] += -prefact * gp * model[d] * np.conj(gq)
+								else:
+									jac[t, f, p, q, c, c, tt, ff, p, c, par] += prefact * gp * model[d] * np.conj(gq)
+									jac[t, f, p, q, c, c, tt, ff, q, c, par] += -prefact * gp * model[d] * np.conj(gq)
+												
+	return jac
 
-	return np.reshape(jac, (data_arr.size, alpha.size))
 
 def j_compute_slow(data_arr, model_arr, freq, alpha, fprofile, basis, lcoord, mcoord):
 	"""
@@ -57,7 +73,7 @@ def j_compute_slow(data_arr, model_arr, freq, alpha, fprofile, basis, lcoord, mc
 				for q in range(nant):
 					for c in range(ncorr):
 						# end of data axes
-						model = model_arr[t, f, p, q, c]
+						model = model_arr[:, t, f, p, q, c]
 						# start of param axes
 						for tt in range(ntimeint):
 							for ff in range(nchanint):
