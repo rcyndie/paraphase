@@ -3,9 +3,9 @@ import time
 from tqdm import tqdm
 
 from paraphase.calibration.basis_compute import basis_compute
-from paraphase.calibration.gains_compute import gains_compute
 from paraphase.derivatives.j_compute import j_compute
 from paraphase.derivatives.jh_compute import jh_compute
+from paraphase.derivatives.jh_compute import jh_compute_slow
 from paraphase.derivatives.jhj_compute import jhj_compute
 from paraphase.calibration.residuals_compute import residuals_compute
 from paraphase.derivatives.jhr_compute import jhr_compute
@@ -14,29 +14,25 @@ from paraphase.calibration.plot_generate import jhj_plot
 from paraphase.calibration.plot_generate import jac_plot
 
 
-def calibratewith(data_arr, model_arr, msrcs, bparams, gparams, sparams, datadiag=None):
+
+def calibratewith(data_arr, model_arr, msrcs, bparams, gparams, sparams, alpha, chan_freq, freqf, datadiag=None):
 	"""
 	The function calibrates given data with specified 'solver'
 	(Consider a diagonal block-wise JHJ).
 
 	"""
-	
-	#
-	basis = basis_compute(msrcs, bparams)
-	#For unity gains.
-	alpha = 0.1*np.ones(gparams["alpha_shape"], dtype=float)
-	gains = gains_compute(basis, alpha, gparams)
 
 	#Compute an initial Chi2 value.
-	residuals = residuals_compute(data_arr, model_arr, gains, datadiag=datadiag)
+	residuals = residuals_compute(data_arr, model_arr, msrcs[:, 1], msrcs[:, 2], alpha, chan_freq, freqf, basis=basis_compute(bparams), datadiag=datadiag)
 	dof = data_arr.size - alpha.size
 	chi20 = (np.linalg.norm(residuals)) / dof
 	chi2_arr = np.array([chi20])
 	
 	for itern in tqdm(range(sparams["itermax"]), desc="DDCalibrating"):
-		jac = j_compute(data_arr, model_arr, gains, gparams, alpha, basis, datadiag=datadiag)
+		jac = j_compute(data_arr, model_arr, msrcs[:, 1], msrcs[:, 2], alpha, chan_freq, freqf, basis=basis_compute(bparams), datadiag=datadiag)
+		jac = np.reshape(jac, (data_arr.size, alpha.size))
 		jh = jh_compute(jac)
-		jhj = jhj_compute(jh, jac, alpha)
+		jhj = jhj_compute(jac, jh, alpha)
 		jhr = jhr_compute(jh, residuals)
 
 		try:
@@ -53,8 +49,8 @@ def calibratewith(data_arr, model_arr, msrcs, bparams, gparams, sparams, datadia
 		alpha = alpha + delta_alpha
 		alpha = (alpha + alpha_old) / 2.
 
-		gains = gains_compute(basis, alpha, gparams)
-		residuals = residuals_compute(data_arr, model_arr, gains, datadiag=datadiag)
+		# residuals = residuals_compute(data_arr, model_arr, gains, datadiag=datadiag)
+		residuals = residuals_compute(data_arr, model_arr, msrcs[:, 1], msrcs[:, 2], alpha, chan_freq, freqf, basis=basis_compute(bparams), datadiag=datadiag)
 		chi2i = (np.linalg.norm(residuals)) / dof
 		chi2_arr = np.append(chi2_arr, chi2i)
 		
@@ -77,13 +73,14 @@ def calibratewith(data_arr, model_arr, msrcs, bparams, gparams, sparams, datadia
 	jhj_plot(jhj, sparams)
 	chi2_plot(chi2_arr, sparams)
 
+
 def delta_compute(alpha, jhj, jhr, gparams, sparams):
 	"""
 	The function computes delta_alpha.
 
 	"""
 
-	n_timint, n_freint, n_ant, n_par, n_ccor = gparams["alpha_shape"]
+	n_timint, n_freint, n_ant, n_ccor, n_par = gparams["alpha_shape"]
 	n_parccor = n_par*n_ccor
 
 	#Initialise delta_alpha.
