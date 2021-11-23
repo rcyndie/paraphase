@@ -43,13 +43,13 @@ def create_parser(argv=None):
 	p.add_option("--freint", dest="freint", type=int, help="Size of solution frequency interval")
 	p.add_option("--freqf", dest="freqf", type=str, help="Specify function for frequency dependence", default="linear")
 	p.add_option("--gtype", dest="gtype", type=str, help="Specify basis solver for parametrised phase gains", default="ppoly")
-	p.add_option("--npar", dest="npar", type=int, help="Specify (odd) number of parameters for gtype-ppoly", default=3)
+	# p.add_option("--npar", dest="npar", type=int, help="Specify number of parameters for gtype-ppoly", default=3)
 	p.add_option("--degpoly", dest="degpoly", type=int, help="Specify the degree of the polynomial for gtype-ppoly", default=1)
 	p.add_option("--kernel", dest="kernel", type=str, help="Specify kernel for covariance function for gtype-pcov")
 	p.add_option("--sigmaf", dest="sigmaf", type=float, help="Standard deviation which controls vertical scaling for gtype-pcov", default=1000.0)
 	p.add_option("--lscale", dest="lscale", type=float, help="Specify input length-scale for gtype-pcov", default=1.0)
 	p.add_option("--jitter", dest="jitter", type=float, help="Specify jitter for Cholesky decomposition for gtype-pcov", default=1e-6)
-	p.add_option("--deltachi", dest="deltachi", type=float, help="Specify threshold for solution stagnancy", default=1e-3)
+	p.add_option("--deltachi", dest="deltachi", type=float, help="Specify threshold for solution stagnancy", default=1e-8)
 	p.add_option("--lambda1", dest="lambda1", type=float, help="Specify damping parameter for GN/LM/GD update", default=0.1)
 	p.add_option("--stepk", dest="stepk", type=float, help="Specify ...", default=10.)
 	p.add_option("--itermax", dest="itermax", type=int, help="Specify maximum number of iterations for Gauss-Newton", default=30)
@@ -61,7 +61,7 @@ def create_parser(argv=None):
 	
 	return p
 
-def extract_modelsrcs(phase_centre, model):
+def extract_modelsrcs(phase_centre, model, normaliseto):
 	"""
 	How to manipulate Tigger sky model (lsm) (model) to obtain ra, dec?
 	>>> l and m.
@@ -83,7 +83,53 @@ def extract_modelsrcs(phase_centre, model):
 	arr2[:, 1] = np.cos(arr1[:, 1]) * np.sin(ra_delta)
 	arr2[:, 2] = np.sin(arr1[:, 1]) * np.cos(dec0) - np.cos(arr1[:, 1]) * np.sin(dec0) * np.cos(ra_delta)
 
-	return arr2
+	return normaliseto(arr2)
+
+def normalise_lm(model):
+    """
+    I want to make a normalisation function to make l and m fit in [-1, 1].
+    
+    """
+    
+    l = model[:, 1]
+    m = model[:, 2]
+
+    min_l = min(np.abs(l))
+    min_m = min(np.abs(m))
+    max_l = max(np.abs(l))
+    max_m = max(np.abs(m))
+    
+    if min_l < min_m:
+        mini = min_l
+    else:
+        mini = min_m
+        
+    if max_l < max_m:
+        maxi = max_m
+    else:
+        maxi = max_l
+    
+    normalised_l = (l - mini)/(maxi - mini)
+    normalised_m = (m - mini)/(maxi - mini)
+
+    model[:, 1] = normalised_l
+    model[:, 2] = normalised_m
+
+    return model
+
+
+def freqf(option):
+	"""
+	Evaluates the function option at this point f.
+
+	"""
+	def profile(f):
+		if option == "linear":
+			return 1./f
+		elif option == "quadratic":
+			return 1./(f**2)
+	
+	return profile
 
 
 def debug():
@@ -124,10 +170,6 @@ def main(debugging=False):
 	n_fre = chan_freq.size
 	if n_fre > 1:
 		chan_freq = chan_freq/min(chan_freq)
-		if options.freqf == "linear":
-			chan_freq = 1./chan_freq
-		elif options.freqf == "quadratic":
-			chan_freq = 1./(chan_freq**2)
 	elif n_fre == 1:
 		chan_freq = np.ones(1, dtype=chan_freq.dtype)
 
@@ -155,30 +197,29 @@ def main(debugging=False):
 		except OSError:
 			pass
 
-	#Specify solution interval sizes.
-	n_timint = options.timint
-	n_freint = options.freint
-
 	#About modelled sources.
 	ra0, dec0 = phase_centre[0], phase_centre[1]
-	arr_srcs = extract_modelsrcs(phase_centre, skymodel)
+	arr_srcs = extract_modelsrcs(phase_centre, skymodel, normaliseto=normalise_lm)
 	n_dir = arr_srcs.shape[0]
 
 	#Parameters for basis.
 	bparams = {"gtype": options.gtype}
 	if options.gtype == "ppoly":
-		n_par = options.npar
-		bparams["n_par"] = options.npar
+		degpoly = options.degpoly
+		bparams["degpoly"] = degpoly
+		n_par = int((degpoly+1) * (degpoly+2)/2)
+		# print(int((degpoly+1)/2 * (degpoly+2)))
+		# print(int((degpoly+1) * (degpoly+2)/2))
+		bparams["n_par"] = n_par
 	elif options.gtype == "pcov":
 		n_par = n_dir
 		bparams2 = {"n_par": n_dir, "sigmaf": options.sigmaf, "lscale": options.lscale, "jitter": options.jitter, "kernel": options.kernel}
 		bparams.update(bparams2)
-	
+
 	#Parameters for gains.
 	#Consider diagonal gains.
-	alpha_shape = [n_timint, n_freint, n_ant, n_par, n_ccor]
-	gains_shape = [n_dir, n_timint, n_fre, n_ant, n_ccor]
-	gparams = {"chan_freq": chan_freq, "alpha_shape": alpha_shape, "gains_shape": gains_shape}
+	alpha_shape = [options.timint, options.freint, n_ant, n_ccor, n_par]
+	gparams = {"chan_freq": chan_freq, "alpha_shape": alpha_shape}
 	gparams.update(bparams)
 
 	#Parameters for solutions.
@@ -194,10 +235,15 @@ def main(debugging=False):
 		data_arr = get_xxyy(data_arr)
 		model_arr = get_xxyy(model_arr)
 	
-	# ms_2D_to_1D(msname, column="DATA3", in_array=data, tchunk=1, fchunk=1, chan=False, timerow=False, valuetype=None)
+	##about alpha.
+	#For unity gains? alpha is zero.
+	#vary alpha to see if the singular matrix issue resolves?
+	alpha = np.zeros(gparams["alpha_shape"], dtype=float)
+	# print("alpha shape", gparams["alpha_shape"])
+	# alpha = 0.1 * np.random.randn(options.timint, options.freint, n_ant, n_ccor, n_par)
 
-	
-	calibratewith(data_arr, model_arr, arr_srcs, bparams, gparams, sparams, options.datadiag)
+	# ms_2D_to_1D(msname, column="DATA3", in_array=data, tchunk=1, fchunk=1, chan=False, timerow=False, valuetype=None)
+	calibratewith(data_arr, model_arr, arr_srcs, bparams, gparams, sparams, alpha, chan_freq, freqf(options.freqf), options.datadiag)
 
 	return options, args
 

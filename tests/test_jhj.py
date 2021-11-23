@@ -65,7 +65,6 @@ def test_jhj():
     #Evaluate JHJ explicitly with jhj_compute_slow().
     jhj = jhj_compute_slow(jacobian, jh, alpha)
 
-    # Test current implementation of complex conjugate transpose of Jacobian against jh_compute_slow.
     jhj_fast = jhj_compute(np.reshape(jacobian, (vis_arr.size, alpha.size)), np.reshape(jh, (alpha.size, vis_arr.size)), alpha)
     jhj_fast = np.reshape(jhj_fast, (alpha.shape+alpha.shape))
 
