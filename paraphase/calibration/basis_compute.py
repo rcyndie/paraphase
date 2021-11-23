@@ -24,7 +24,7 @@ def make_basis_vec(l_d, m_d, n_par):
 
 def polynomial_expression(ld, md, bparams):
     """
-    Returns a vector space corresponding to a degpoly degree of polynomial
+    Returns a vector space corresponding to a `degpoly' degree of polynomial
     basis.
 
     """
@@ -50,36 +50,38 @@ def polynomial_expression(ld, md, bparams):
                     arr1 = np.append(arr1, arr2)
 
             arr0 = np.append(arr0, arr1)
-        print("Length of array0", len(arr0))
+        
         return arr0
 
-def get_basis_poly1(lcoordi, mcoordi, n_par):
+def get_basis_poly(bparams):
     """
     Define a linear basis gtype operator. 
 
     """
+    def expression(li, mi):
+        return polynomial_expression(li, mi, bparams)
 
-    return make_basis_vec(lcoordi, mcoordi, n_par)
+    return expression
 
     
-def get_basis_poly(sources, n_par):
-    """
-    Get basis matrix of shape (n_params, n_dir). Both l and m, which represent the
-    direction cosine coordinates of the sources are each vectors of length n_dir.
+# def get_basis_poly(sources, n_par):
+#     """
+#     Get basis matrix of shape (n_params, n_dir). Both l and m, which represent the
+#     direction cosine coordinates of the sources are each vectors of length n_dir.
     
-    """
+#     """
 
-    #Get the dimension and the direction cosines.
-    l = sources[:, 1]
-    m = sources[:, 2]
+#     #Get the dimension and the direction cosines.
+#     l = sources[:, 1]
+#     m = sources[:, 2]
 
-    n_dir = sources.shape[0]
-    basis = np.zeros((n_par, n_dir))
+#     n_dir = sources.shape[0]
+#     basis = np.zeros((n_par, n_dir))
 
-    for d in range(n_dir):
-        basis[:, d] = make_basis_vec(l[d], m[d], n_par)
+#     for d in range(n_dir):
+#         basis[:, d] = make_basis_vec(l[d], m[d], n_par)
 
-    return basis
+#     return basis
 
 
 def get_basis_cov(sources, bparams):
@@ -100,6 +102,35 @@ def get_basis_cov(sources, bparams):
     #if I am incorrect, they should at least be of the same shapes.
 
     return L
+
+
+def cholesky_decompose_expression0(lcoord, mcoord, bparams):
+    """
+    Returns a Cholesky decomposition of a covariance matrix.
+    
+    """
+
+    def compute_cov():
+        """
+        Get basis matrix >>> covariance matrix >>> Cholesky decomposition.
+        recall bparams = {"n_par": n_dir, "sigmaf": options.sigmaf, "lscale": options.lscale}
+        and more.
+
+        """
+
+        #Get covariance vector.
+        # K = squared_exp(sources, sources, bparams["sigmaf"], bparams["lscale"])
+        K = squared_exp0(lcoord, mcoord, bparams["sigmaf"], bparams["lscale"])
+
+        #Compute Cholesky decomposition of K_inv.
+        L = np.linalg.cholesky(K + bparams["jitter"] * np.eye(K.shape[0]))
+        #Remember L and K are of shapes n_sources \times n_sources, or
+        #if I am incorrect, they should at least be of the same shapes.
+
+        return L
+
+    return compute_cov
+
 
 def squared_exp(x, xp, sigmaf, l):
     """
@@ -126,17 +157,59 @@ def squared_exp(x, xp, sigmaf, l):
             
     return C
 
-
-def basis_compute(msrcs, bparams):
+def squared_exp0(lcoord, mcoord, sigmaf, lscale):
     """
-    The function computes a basis given the specifications.
-    params is n_par when using a gtype-ppoly.
-    params is n_dir, sigmaf, l and more when using a gtype-pcov.
+    The function returns a covariance matrix using the squared 
+    exponential (SE) kernel.
+    
+    k(x, xp) = sigma^2 * exp(-(x-xp)^2/(2*l^2))
+    
+    """
+    
+    def get_cov(ld, md):
+        # if x.ndim > 1 or xp.ndim > 1:
+        #    raise ValueError("Inputs must be 1D")
+        
+        #
+        N = len(lcoord)
+
+        #Create covariance matrix.
+        cov = np.zeros((N))
+
+        for i in range(N):
+            cov[i] = sigmaf**2*np.exp(-(1/2*lscale**2)*((lcoord[i] - ld)**2 + (mcoord[i] - md)**2))
+                
+        return cov
+
+    return get_cov
+
+
+# def basis_compute(lcoordi, mcoordi, bparams):
+#     """
+#     The function computes a basis given the specifications.
+#     params is n_par when using a gtype-ppoly.
+#     params is n_dir, sigmaf, l and more when using a gtype-pcov.
+
+#     """
+
+#     if bparams["gtype"] == "ppoly":
+#         return get_basis_poly(bparams)(lcoordi, mcoordi)
+#         # return polynomial_expression(lcoordi, mcoordi, bparams)
+#         # return get_basis_poly(msrcs, bparams["n_par"])
+#     elif bparams["gtype"] == "pcov":
+#         cholesky_decompose_expression()
+#         return get_basis_cov(msrcs, bparams)
+
+def basis_compute(bparams):
+    """
+    The function evaluates a basis given the options bparams.
 
     """
 
-    if bparams["gtype"] == "ppoly":
-        polynomial_expression(msrcs[0, 0], msrcs[0, 0], bparams)
-        return get_basis_poly(msrcs, bparams["n_par"])
-    elif bparams["gtype"] == "pcov":
-        return get_basis_cov(msrcs, bparams)
+    def get_basis(li, mi):
+        if bparams["gtype"] == "ppoly":
+            return polynomial_expression(li, mi, bparams)
+        elif bparams["gtype"] == "pcov":
+            return cholesky_decompose_expression(li, mi, bparams)
+
+    return get_basis
